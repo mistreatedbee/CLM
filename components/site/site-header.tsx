@@ -38,11 +38,6 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link href="/admin">
-            <Button variant="ghost" className="h-11 px-4 text-base">
-              Admin
-            </Button>
-          </Link>
           <Link href="/apply">
             <Button className="h-12 gap-2 px-6 text-base font-semibold">
               Apply now
@@ -80,11 +75,6 @@ export function SiteHeader() {
             </a>
           ))}
           <div className="mt-2 flex flex-col gap-2">
-            <Link href="/admin" onClick={() => setOpen(false)}>
-              <Button variant="outline" className="h-12 w-full text-base">
-                Admin portal
-              </Button>
-            </Link>
             <Link href="/apply" onClick={() => setOpen(false)}>
               <Button className="h-14 w-full gap-2 text-lg font-semibold">
                 Apply now <ArrowRight className="size-5" />
