@@ -23,16 +23,6 @@ export function Hero() {
     <section className="relative overflow-hidden bg-background">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 md:py-24 lg:grid-cols-2">
         <div className="text-center lg:text-left">
-          {/* Logo mark above headline */}
-          <div className="mb-6 flex justify-center lg:justify-start">
-            <div className="overflow-hidden rounded-2xl border border-border shadow-lg">
-              <img
-                src="/images/logo.jpeg"
-                alt="Christian Leadership Movement"
-                className="h-20 w-20 object-cover sm:h-24 sm:w-24"
-              />
-            </div>
-          </div>
           <Badge variant="gold" className="mb-6 px-4 py-1.5 text-sm">
             <Sparkles className="size-4" /> Applications are open for 2026
           </Badge>

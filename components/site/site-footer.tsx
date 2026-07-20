@@ -94,7 +94,17 @@ export function SiteFooter() {
 
       <div className="border-t border-sidebar-border/60">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-sidebar-foreground/60 sm:flex-row sm:px-6">
-          <p>&copy; {new Date().getFullYear()} Christian Leadership Movement. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} Christian Leadership Movement. All rights reserved.
+            {/* Hidden admin link — same colour as text, no label */}
+            <Link
+              href="/admin"
+              aria-label="Staff portal"
+              className="ml-1 select-none text-sidebar-foreground/60 hover:text-sidebar-foreground/60"
+            >
+              ·
+            </Link>
+          </p>
           <p>Transforming Leaders, Transforming the Nations.</p>
         </div>
       </div>
