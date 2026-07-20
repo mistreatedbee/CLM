@@ -27,11 +27,12 @@ export function Hero() {
             <Sparkles className="size-4" /> Applications are open for 2026
           </Badge>
           <h1 className="font-heading text-4xl font-extrabold leading-[1.1] tracking-tight text-balance text-foreground sm:text-5xl md:text-6xl">
-            Become the leader God <span className="text-[color:var(--gold)]">called you</span> to be
+            Transforming Leaders,{' '}
+            <span className="text-[color:var(--gold)]">Transforming the Nations</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
-            The Christian Leadership Movement equips everyday believers to serve, lead, and
-            transform their communities. Applying is simple and takes about 15 minutes.
+            The Christian Leadership Movement develops and equips Christ-centred leaders to serve,
+            disciple, and transform their communities. Applying is simple and takes about 15 minutes.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:items-start lg:justify-start">
             <Link href="/apply" className="w-full sm:w-auto">
@@ -356,18 +357,29 @@ export function ContactSection() {
           Have questions? We are here to help.
         </h2>
         <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-          Our team is happy to guide you through anything you need. Reach out any time.
+          Our team is happy to guide you through your application. Reach out any time.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <a href="tel:+27123456789" className="w-full sm:w-auto">
+          <a href="tel:+27732047642" className="w-full sm:w-auto">
             <Button variant="outline" className="h-14 w-full gap-2 px-8 text-lg sm:w-auto">
-              Call +27 12 345 6789
+              Call 073 204 7642
             </Button>
           </a>
-          <a href="mailto:hello@clm.org.za" className="w-full sm:w-auto">
+          <a href="mailto:kenstraining04@gmail.com" className="w-full sm:w-auto">
             <Button className="h-14 w-full gap-2 px-8 text-lg sm:w-auto">Email us</Button>
           </a>
         </div>
+        <p className="mt-6 text-base text-muted-foreground">
+          Or visit us at{' '}
+          <a
+            href="https://www.christianleadershipmovement.co.za"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:underline"
+          >
+            christianleadershipmovement.co.za
+          </a>
+        </p>
       </div>
     </section>
   )

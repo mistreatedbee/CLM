@@ -17,10 +17,9 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: 'CLM | Christian Leadership Movement',
+  title: 'Christian Leadership Movement | Transforming Leaders, Transforming the Nations',
   description:
-    'Apply to join the Christian Leadership Movement. A simple, accessible application built for everyone.',
-  generator: 'v0.app',
+    'Apply to join the Christian Leadership Movement — developing Christ-centred leaders through training, mentorship, and discipleship across South Africa.',
 }
 
 export const viewport: Viewport = {
