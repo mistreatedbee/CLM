@@ -46,8 +46,20 @@ export function AdminSidebar({
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex items-center justify-between border-b border-sidebar-border px-5 py-5">
-          <ClmLogo invert />
+        <div className="flex items-center justify-between border-b border-sidebar-border px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="overflow-hidden rounded-xl border border-white/10">
+              <img
+                src="/images/logo.jpeg"
+                alt="CLM"
+                className="h-10 w-10 object-cover"
+              />
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="font-heading text-base font-extrabold tracking-tight text-white">CLM</span>
+              <span className="text-[11px] font-medium text-white/60">Admin Portal</span>
+            </div>
+          </div>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-sidebar-foreground/70 hover:bg-sidebar-accent lg:hidden"

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { AdminLoginForm } from './login-form'
-import { ClmLogo } from '@/components/clm-logo'
 
 export const metadata: Metadata = {
   title: 'Admin Login | Christian Leadership Movement',
@@ -11,12 +10,18 @@ export default function AdminLoginPage() {
     <div className="flex min-h-dvh flex-col items-center justify-center bg-muted/40 px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center text-center">
-          <ClmLogo />
-          <h1 className="mt-6 font-heading text-2xl font-extrabold tracking-tight text-foreground">
-            Admin Portal
+          <div className="overflow-hidden rounded-2xl border border-border shadow-lg">
+            <img
+              src="/images/logo.jpeg"
+              alt="Christian Leadership Movement"
+              className="h-24 w-24 object-cover"
+            />
+          </div>
+          <h1 className="mt-5 font-heading text-2xl font-extrabold tracking-tight text-foreground">
+            Christian Leadership Movement
           </h1>
-          <p className="mt-2 text-base text-muted-foreground">
-            Sign in to manage applications and members.
+          <p className="mt-1 text-base text-muted-foreground">
+            Sign in to the admin portal.
           </p>
         </div>
 
