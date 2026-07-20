@@ -1,0 +1,64 @@
+import { Analytics } from '@vercel/analytics/next'
+import type { Metadata, Viewport } from 'next'
+import { Inter, Manrope } from 'next/font/google'
+import { AccessibilityProvider } from '@/components/accessibility/accessibility-provider'
+import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-manrope',
+  display: 'swap',
+})
+
+export const metadata: Metadata = {
+  title: 'CLM | Christian Leadership Movement',
+  description:
+    'Apply to join the Christian Leadership Movement. A simple, accessible application built for everyone.',
+  generator: 'v0.app',
+}
+
+export const viewport: Viewport = {
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#0c1a63' },
+    { media: '(prefers-color-scheme: dark)', color: '#080c1c' },
+  ],
+}
+
+const themeScript = `
+(function() {
+  try {
+    var p = JSON.parse(localStorage.getItem('clm-a11y') || '{}');
+    var el = document.documentElement;
+    if (p.theme === 'dark') el.classList.add('dark');
+    else if (p.theme === 'light') el.classList.remove('dark');
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) el.classList.add('dark');
+    if (p.highContrast) el.classList.add('high-contrast');
+    if (p.fontScale) el.style.setProperty('--font-scale', String(p.fontScale));
+  } catch (e) {}
+})();
+`
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="en" className={`${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="bg-background antialiased">
+        <AccessibilityProvider>{children}</AccessibilityProvider>
+        {process.env.NODE_ENV === 'production' && <Analytics />}
+      </body>
+    </html>
+  )
+}

@@ -1,0 +1,218 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+}
+
+:root {
+  color-scheme: light;
+  /* CLM brand */
+  --background: #f4f6fb;
+  --foreground: #131a33;
+  --card: #ffffff;
+  --card-foreground: #131a33;
+  --popover: #ffffff;
+  --popover-foreground: #131a33;
+  --primary: #0c1a63;
+  --primary-foreground: #ffffff;
+  --secondary: #e7ebf6;
+  --secondary-foreground: #0c1a63;
+  --muted: #eef1f8;
+  --muted-foreground: #5a6178;
+  --accent: #e9edf9;
+  --accent-foreground: #0c1a63;
+  --gold: #d4a527;
+  --gold-foreground: #2a2100;
+  --success: #1f9d55;
+  --success-foreground: #ffffff;
+  --warning: #b7791f;
+  --warning-foreground: #ffffff;
+  --destructive: #d13438;
+  --destructive-foreground: #ffffff;
+  --border: #dbe0ee;
+  --input: #d3d9ea;
+  --ring: #0c1a63;
+  --chart-1: #0c1a63;
+  --chart-2: #d4a527;
+  --chart-3: #1f9d55;
+  --chart-4: #3b5bdb;
+  --chart-5: #d13438;
+  --radius: 0.9rem;
+  --sidebar: #0c1a63;
+  --sidebar-foreground: #d7ddf1;
+  --sidebar-primary: #d4a527;
+  --sidebar-primary-foreground: #2a2100;
+  --sidebar-accent: #16256f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1c2c7a;
+  --sidebar-ring: #d4a527;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #080c1c;
+  --foreground: #eef1fb;
+  --card: #0f1530;
+  --card-foreground: #eef1fb;
+  --popover: #0f1530;
+  --popover-foreground: #eef1fb;
+  --primary: #4c63d2;
+  --primary-foreground: #ffffff;
+  --secondary: #18204a;
+  --secondary-foreground: #dbe1f7;
+  --muted: #151c3d;
+  --muted-foreground: #9aa3c4;
+  --accent: #18204a;
+  --accent-foreground: #ffffff;
+  --gold: #e2b53f;
+  --gold-foreground: #241c00;
+  --success: #2fbd6c;
+  --success-foreground: #04160c;
+  --warning: #e0a52e;
+  --warning-foreground: #241900;
+  --destructive: #f16063;
+  --destructive-foreground: #1a0405;
+  --border: #242d5a;
+  --input: #2a3363;
+  --ring: #4c63d2;
+  --chart-1: #6a7fe0;
+  --chart-2: #e2b53f;
+  --chart-3: #2fbd6c;
+  --chart-4: #8aa0ff;
+  --chart-5: #f16063;
+  --sidebar: #0b1130;
+  --sidebar-foreground: #c4ccec;
+  --sidebar-primary: #e2b53f;
+  --sidebar-primary-foreground: #241c00;
+  --sidebar-accent: #17205199;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #212a58;
+  --sidebar-ring: #e2b53f;
+}
+
+/* High contrast mode: stronger separation, heavier borders */
+.high-contrast {
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #001a8c;
+  --primary-foreground: #ffffff;
+  --secondary: #e9edf9;
+  --secondary-foreground: #000000;
+  --muted: #f0f0f0;
+  --muted-foreground: #1a1a1a;
+  --accent: #e9edf9;
+  --accent-foreground: #000000;
+  --gold: #8a6a00;
+  --gold-foreground: #ffffff;
+  --success: #0a6b34;
+  --success-foreground: #ffffff;
+  --warning: #7a4d00;
+  --warning-foreground: #ffffff;
+  --destructive: #a10005;
+  --destructive-foreground: #ffffff;
+  --border: #000000;
+  --input: #000000;
+  --ring: #001a8c;
+}
+
+.high-contrast.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #000000;
+  --card-foreground: #ffffff;
+  --popover: #000000;
+  --popover-foreground: #ffffff;
+  --primary: #7f95ff;
+  --primary-foreground: #000000;
+  --secondary: #111111;
+  --secondary-foreground: #ffffff;
+  --muted: #0a0a0a;
+  --muted-foreground: #ededed;
+  --accent: #111111;
+  --accent-foreground: #ffffff;
+  --border: #ffffff;
+  --input: #ffffff;
+  --ring: #7f95ff;
+}
+
+.high-contrast * {
+  border-color: var(--border) !important;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    font-size: calc(1rem * var(--font-scale, 1));
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Soft, elderly-friendly focus ring across interactive elements */
+@layer base {
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+  }
+}
