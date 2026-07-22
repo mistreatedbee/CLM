@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: 'Christian Leadership Movement | Transforming Leaders, Transforming the Nations',
   description:
     'Apply to join the Christian Leadership Movement — developing Christ-centred leaders through training, mentorship, and discipleship across South Africa.',
+  icons: {
+    icon: '/images/logo.jpeg',
+    apple: '/images/logo.jpeg',
+  },
 }
 
 export const viewport: Viewport = {

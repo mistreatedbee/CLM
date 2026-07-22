@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Globe, Mail, MapPin, Phone } from 'lucide-react'
+import { Globe, Lock, Mail, MapPin, Phone } from 'lucide-react'
 import { ClmLogo } from '@/components/clm-logo'
 
 export function SiteFooter() {
@@ -94,15 +94,15 @@ export function SiteFooter() {
 
       <div className="border-t border-sidebar-border/60">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-sidebar-foreground/60 sm:flex-row sm:px-6">
-          <p>
+          <p className="flex items-center gap-2">
             &copy; {new Date().getFullYear()} Christian Leadership Movement. All rights reserved.
-            {/* Hidden admin link — same colour as text, no label */}
             <Link
-              href="/admin"
-              aria-label="Staff portal"
-              className="ml-1 select-none text-sidebar-foreground/60 hover:text-sidebar-foreground/60"
+              href="/admin/login"
+              aria-label="Admin login"
+              title="Admin login"
+              className="inline-flex items-center justify-center rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground/80"
             >
-              ·
+              <Lock className="size-3.5" />
             </Link>
           </p>
           <p>Transforming Leaders, Transforming the Nations.</p>
