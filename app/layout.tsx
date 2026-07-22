@@ -34,20 +34,20 @@ export const metadata: Metadata = {
     siteName: 'Christian Leadership Movement',
     images: [
       {
-        url: `${APP_URL}/images/logo.jpeg`,
-        width: 800,
-        height: 800,
+        url: `${APP_URL}/opengraph-image`,
+        width: 1200,
+        height: 630,
         alt: 'Christian Leadership Movement',
       },
     ],
     type: 'website',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Christian Leadership Movement',
     description:
       'Apply to join the Christian Leadership Movement — developing Christ-centred leaders through training, mentorship, and discipleship across South Africa.',
-    images: [`${APP_URL}/images/logo.jpeg`],
+    images: [`${APP_URL}/opengraph-image`],
   },
 }
 
