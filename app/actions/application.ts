@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 import type { ApplicationForm } from '@/components/apply/form-model'
 
 export type SubmitResult =
@@ -9,10 +9,10 @@ export type SubmitResult =
 
 export async function submitApplication(form: ApplicationForm): Promise<SubmitResult> {
   try {
-    const supabase = await createClient()
+    const [supabase, adminSupabase] = await Promise.all([createClient(), createAdminClient()])
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { data, error } = await supabase
+    const { data, error } = await adminSupabase
       .from('clm_applications')
       .insert({
         full_name: form.fullName,
