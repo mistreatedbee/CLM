@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 import type { ApplicationStatus } from '@/lib/supabase/types'
 
 export type ActionResult = { success: true } | { success: false; error: string }
@@ -12,11 +12,25 @@ export async function updateApplicationStatus(
   applicantName: string,
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
+    const [supabase, adminSupabase] = await Promise.all([createClient(), createAdminClient()])
 
-    const { error } = await supabase
+    // When approving, the DB trigger creates a member record and requires a non-null email.
+    // Since the form no longer collects email, we set it from whatsapp/phone so the trigger succeeds.
+    let updatePayload: Record<string, unknown> = { status }
+    if (status === 'approved') {
+      const { data: app } = await adminSupabase
+        .from('clm_applications')
+        .select('email, whatsapp, phone')
+        .eq('id', applicationId)
+        .single()
+      if (app && !app.email) {
+        updatePayload.email = app.whatsapp ?? app.phone ?? ''
+      }
+    }
+
+    const { error } = await adminSupabase
       .from('clm_applications')
-      .update({ status })
+      .update(updatePayload)
       .eq('id', applicationId)
 
     if (error) {

@@ -19,14 +19,10 @@ export async function submitApplication(form: ApplicationForm): Promise<SubmitRe
         id_number: form.idNumber,
         gender: form.gender as 'Male' | 'Female',
         marital_status: form.maritalStatus,
-        // whatsapp stored in phone field; home number appended after a separator
-        phone: form.whatsapp,
-        // store home/landline number + course in admin_notes until migration runs
-        admin_notes: [
-          form.phone ? `Home/Phone: ${form.phone}` : '',
-          form.course ? `Course: ${form.course}` : '',
-        ].filter(Boolean).join('\n') || null,
-        email: form.whatsapp, // email is NOT NULL in current schema — store whatsapp here
+        whatsapp: form.whatsapp,
+        phone: form.phone,
+        course: form.course || null,
+        email: null,
         physical_address: form.address,
         country: form.country,
         accepted_christ_date: form.acceptedDate,
@@ -56,7 +52,7 @@ export async function submitApplication(form: ApplicationForm): Promise<SubmitRe
 
     if (error) {
       console.error('Application submit error:', error)
-      return { success: false, error: `Submit failed: ${error.message} [${error.code}]` }
+      return { success: false, error: 'Failed to submit application. Please try again.' }
     }
 
     return { success: true, ref: data.ref }

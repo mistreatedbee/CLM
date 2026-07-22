@@ -11,7 +11,7 @@ import type { ApplicationNote } from '@/lib/supabase/types'
 
 function buildQuickResponse(name: string, course?: string) {
   const firstName = name.split(' ')[0]
-  const courseText = course ? ` for the **${course}** course` : ''
+  const courseText = course ? ` for the ${course} course` : ''
   return `Dear ${firstName},\n\nThank you for submitting your application to CLM${courseText}. We have received your application and it is currently under review.\n\nOur team will be in touch with you shortly regarding the next steps. Should you have any questions in the meantime, please do not hesitate to contact us.\n\nGod bless you,\nThe CLM Team`
 }
 
@@ -20,7 +20,7 @@ export function ReviewActions({
   initialStatus,
   initialNotes,
   applicantName,
-  applicantEmail,
+  applicantWhatsapp,
   course,
 }: {
   applicationId: string
@@ -177,8 +177,19 @@ export function ReviewActions({
       <div className="rounded-2xl border border-input bg-card p-5">
         <h3 className="font-heading text-lg font-bold text-foreground">Quick response</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Generate a ready-to-send acknowledgement for this applicant.
+          Generate a ready-to-send acknowledgement message for WhatsApp.
         </p>
+        {applicantWhatsapp && (
+          <a
+            href={`https://wa.me/${applicantWhatsapp.replace(/\D/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+          >
+            <Send className="size-4" />
+            Open WhatsApp: {applicantWhatsapp}
+          </a>
+        )}
         <Button
           onClick={() => {
             setQuickResponse(buildQuickResponse(applicantName, course))
@@ -192,7 +203,7 @@ export function ReviewActions({
         {quickResponse && (
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>WhatsApp: {applicantWhatsapp}</span>
+              <span>Copy, then paste into WhatsApp</span>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(quickResponse)
@@ -202,7 +213,7 @@ export function ReviewActions({
                 className="flex items-center gap-1.5 rounded-lg px-2 py-1 font-semibold text-primary hover:bg-primary/10"
               >
                 {copied ? <ClipboardCheck className="size-4" /> : <Clipboard className="size-4" />}
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? 'Copied!' : 'Copy message'}
               </button>
             </div>
             <pre className="whitespace-pre-wrap rounded-xl bg-muted/60 p-4 text-sm leading-relaxed text-foreground">

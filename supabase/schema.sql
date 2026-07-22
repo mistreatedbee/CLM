@@ -163,7 +163,7 @@ create table public.members (
 
   full_name         text not null,
   phone             text not null,
-  email             text not null,
+  email             text,
   church            text not null,
   leadership_level  text not null default 'Trainee'
                       check (leadership_level in ('Trainee', 'Deacon', 'Elder', 'Leader')),
@@ -196,7 +196,7 @@ begin
       public.generate_member_number(),
       new.id,
       new.full_name,
-      new.phone,
+      coalesce(new.whatsapp, new.phone),
       new.email,
       new.church_name,
       current_date
@@ -326,9 +326,9 @@ create policy "Admins view audit logs" on public.audit_logs
 -- UPDATE public.profiles SET role = 'admin' WHERE email = 'your-admin@email.com';
 
 -- ============================================================
--- MIGRATION: Add whatsapp and course columns
--- Run this if the table already exists (do not run on fresh install)
+-- MIGRATION: Run these in Supabase SQL Editor if tables already exist
 -- ============================================================
 -- ALTER TABLE public.clm_applications ADD COLUMN IF NOT EXISTS whatsapp text;
 -- ALTER TABLE public.clm_applications ADD COLUMN IF NOT EXISTS course text;
 -- ALTER TABLE public.clm_applications ALTER COLUMN email DROP NOT NULL;
+-- ALTER TABLE public.members ALTER COLUMN email DROP NOT NULL;

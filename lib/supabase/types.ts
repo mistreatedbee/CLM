@@ -151,7 +151,7 @@ export interface Database {
           application_id: string | null
           full_name: string
           phone: string
-          email: string
+          email: string | null
           church: string
           leadership_level: LeadershipLevel
           status: MemberStatus
@@ -165,7 +165,7 @@ export interface Database {
           application_id?: string | null
           full_name: string
           phone: string
-          email: string
+          email?: string | null
           church: string
           leadership_level?: LeadershipLevel
           status?: MemberStatus
