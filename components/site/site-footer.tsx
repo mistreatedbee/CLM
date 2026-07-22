@@ -93,19 +93,16 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-sidebar-border/60">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-sidebar-foreground/60 sm:flex-row sm:px-6">
-          <p className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 text-xs text-sidebar-foreground/60 sm:flex-row sm:px-6">
+          <p>
             &copy; {new Date().getFullYear()} Christian Leadership Movement. All rights reserved.
-            <Link
-              href="/admin/login"
-              aria-label="Admin login"
-              title="Admin login"
-              className="inline-flex items-center justify-center rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground/80"
-            >
-              <Lock className="size-3.5" />
-            </Link>
           </p>
-          <p>Transforming Leaders, Transforming the Nations.</p>
+          <Link
+            href="/admin/login"
+            className="inline-flex items-center gap-2 rounded-lg border border-sidebar-foreground/20 bg-sidebar-foreground/10 px-4 py-2 text-sm font-semibold text-sidebar-foreground/80 transition-colors hover:bg-sidebar-foreground/20 hover:text-white"
+          >
+            <Lock className="size-4" /> Admin Login
+          </Link>
         </div>
       </div>
     </footer>
