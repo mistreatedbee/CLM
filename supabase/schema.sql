@@ -89,8 +89,10 @@ create table public.clm_applications (
   id_number          text not null,
   gender             text not null check (gender in ('Male', 'Female')),
   marital_status     text not null,
+  whatsapp           text,
   phone              text not null,
-  email              text not null,
+  email              text,
+  course             text,
   physical_address   text not null,
   country            text not null default 'South Africa',
 
@@ -322,3 +324,11 @@ create policy "Admins view audit logs" on public.audit_logs
 -- Replace the email with your own admin email address.
 -- ============================================================
 -- UPDATE public.profiles SET role = 'admin' WHERE email = 'your-admin@email.com';
+
+-- ============================================================
+-- MIGRATION: Add whatsapp and course columns
+-- Run this if the table already exists (do not run on fresh install)
+-- ============================================================
+-- ALTER TABLE public.clm_applications ADD COLUMN IF NOT EXISTS whatsapp text;
+-- ALTER TABLE public.clm_applications ADD COLUMN IF NOT EXISTS course text;
+-- ALTER TABLE public.clm_applications ALTER COLUMN email DROP NOT NULL;
