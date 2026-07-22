@@ -14,7 +14,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { applicationsByMonth, genderDistribution } from '@/lib/clm-data'
 
 const NAVY = 'var(--primary)'
 const GOLD = 'var(--gold)'
@@ -35,10 +34,14 @@ function ChartTooltip({ active, payload, label }: any) {
   )
 }
 
-export function ApplicationsTrendChart() {
+export function ApplicationsTrendChart({
+  data,
+}: {
+  data: { month: string; applications: number; approved: number }[]
+}) {
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={applicationsByMonth} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
         <defs>
           <linearGradient id="fillApps" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={NAVY} stopOpacity={0.28} />
@@ -81,13 +84,13 @@ export function ApplicationsTrendChart() {
   )
 }
 
-export function GenderPieChart() {
+export function GenderPieChart({ data }: { data: { name: string; value: number }[] }) {
   const colors = [GOLD, NAVY]
   return (
     <ResponsiveContainer width="100%" height={220}>
       <PieChart>
         <Pie
-          data={genderDistribution}
+          data={data}
           dataKey="value"
           nameKey="name"
           innerRadius={55}
@@ -95,7 +98,7 @@ export function GenderPieChart() {
           paddingAngle={3}
           strokeWidth={0}
         >
-          {genderDistribution.map((_, i) => (
+          {data.map((_, i) => (
             <Cell key={i} fill={colors[i % colors.length]} />
           ))}
         </Pie>

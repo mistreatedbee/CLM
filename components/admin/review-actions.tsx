@@ -6,54 +6,79 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/admin/status-badge'
 import { cn } from '@/lib/utils'
 import { statusLabel, type ApplicationStatus } from '@/lib/clm-data'
-
-type Note = { id: string; author: string; text: string; date: string }
+import { updateApplicationStatus, addApplicationNote } from '@/app/actions/admin'
+import type { ApplicationNote } from '@/lib/supabase/types'
 
 export function ReviewActions({
+  applicationId,
   initialStatus,
   initialNotes,
 }: {
+  applicationId: string
   initialStatus: ApplicationStatus
-  initialNotes: Note[]
+  initialNotes: ApplicationNote[]
 }) {
   const [status, setStatus] = useState<ApplicationStatus>(initialStatus)
-  const [notes, setNotes] = useState<Note[]>(initialNotes)
+  const [notes, setNotes] = useState<ApplicationNote[]>(initialNotes)
   const [draft, setDraft] = useState('')
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const flash = (msg: string) => {
-    setToast(msg)
+  const flash = (msg: string, ok: boolean) => {
+    setToast({ msg, ok })
     setTimeout(() => setToast(null), 2600)
   }
 
-  const decide = (next: ApplicationStatus) => {
-    setStatus(next)
-    flash(`Application marked as “${statusLabel(next)}”. The applicant has been notified.`)
+  const decide = async (next: ApplicationStatus) => {
+    setLoading(true)
+    const result = await updateApplicationStatus(applicationId, next, '')
+    setLoading(false)
+    if (result.success) {
+      setStatus(next)
+      flash(`Application marked as "${statusLabel(next)}".`, true)
+    } else {
+      flash(result.error, false)
+    }
   }
 
-  const addNote = () => {
+  const submitNote = async () => {
     if (!draft.trim()) return
-    setNotes((n) => [
-      {
-        id: `n${Date.now()}`,
-        author: 'Thabo Mokoena',
-        text: draft.trim(),
-        date: new Date().toISOString(),
-      },
-      ...n,
-    ])
-    setDraft('')
-    flash('Internal note added.')
+    const text = draft.trim()
+    setLoading(true)
+    const result = await addApplicationNote(applicationId, text)
+    setLoading(false)
+    if (result.success) {
+      setDraft('')
+      setNotes((prev) => [
+        {
+          id: `opt-${Date.now()}`,
+          application_id: applicationId,
+          author_id: null,
+          author_name: 'You',
+          text,
+          created_at: new Date().toISOString(),
+        },
+        ...prev,
+      ])
+      flash('Note added.', true)
+    } else {
+      flash(result.error, false)
+    }
   }
 
   return (
     <div className="space-y-6">
       {toast && (
         <div
-          className="rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-base font-medium text-success"
+          className={cn(
+            'rounded-2xl border px-4 py-3 text-base font-medium',
+            toast.ok
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-destructive/30 bg-destructive/10 text-destructive',
+          )}
           role="status"
         >
-          {toast}
+          {toast.msg}
         </div>
       )}
 
@@ -65,6 +90,7 @@ export function ReviewActions({
         <div className="grid grid-cols-1 gap-3">
           <Button
             onClick={() => decide('approved')}
+            disabled={loading}
             className={cn(
               'h-13 justify-start gap-3 bg-success py-3 text-base font-semibold text-success-foreground hover:bg-success/90',
               status === 'approved' && 'ring-2 ring-success ring-offset-2 ring-offset-card',
@@ -73,7 +99,8 @@ export function ReviewActions({
             <CheckCircle2 className="size-5" /> Approve application
           </Button>
           <Button
-            onClick={() => decide('info-requested')}
+            onClick={() => decide('info_requested')}
+            disabled={loading}
             variant="outline"
             className="h-13 justify-start gap-3 py-3 text-base font-semibold"
           >
@@ -81,6 +108,7 @@ export function ReviewActions({
           </Button>
           <Button
             onClick={() => decide('rejected')}
+            disabled={loading}
             variant="outline"
             className="h-13 justify-start gap-3 border-destructive/30 py-3 text-base font-semibold text-destructive hover:bg-destructive/10"
           >
@@ -102,7 +130,11 @@ export function ReviewActions({
             placeholder="Add a note about this candidate..."
             className="w-full resize-none rounded-xl border border-input bg-background p-3 text-base text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
           />
-          <Button onClick={addNote} disabled={!draft.trim()} className="mt-3 gap-2">
+          <Button
+            onClick={submitNote}
+            disabled={!draft.trim() || loading}
+            className="mt-3 gap-2"
+          >
             <MessageSquarePlus className="size-5" /> Add note
           </Button>
         </div>
@@ -114,9 +146,9 @@ export function ReviewActions({
           {notes.map((n) => (
             <li key={n.id} className="rounded-xl bg-muted/60 p-4">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground">{n.author}</span>
+                <span className="font-semibold text-foreground">{n.author_name}</span>
                 <span className="text-sm text-muted-foreground">
-                  {new Date(n.date).toLocaleDateString('en-ZA', {
+                  {new Date(n.created_at).toLocaleDateString('en-ZA', {
                     day: 'numeric',
                     month: 'short',
                   })}

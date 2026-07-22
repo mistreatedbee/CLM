@@ -1,6 +1,13 @@
+import { createClient } from '@/lib/supabase/server'
 import { ApplicationsTable } from '@/components/admin/applications-table'
 
-export default function ApplicationsPage() {
+export default async function ApplicationsPage() {
+  const supabase = await createClient()
+  const { data: applications } = await supabase
+    .from('clm_applications')
+    .select('*')
+    .order('created_at', { ascending: false })
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
@@ -11,7 +18,7 @@ export default function ApplicationsPage() {
           Review, filter, and manage all applications to the movement.
         </p>
       </div>
-      <ApplicationsTable />
+      <ApplicationsTable applications={applications ?? []} />
     </div>
   )
 }
