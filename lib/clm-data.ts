@@ -1,5 +1,13 @@
 import type { ApplicationStatus } from '@/lib/supabase/types'
 
+// Older applications stored course and home phone inside admin_notes before dedicated columns existed.
+// Format: "Home/Phone: 0821234567\nCourse: Diploma in Theology"
+export function extractFromNotes(notes: string | null, key: 'Course' | 'Home/Phone'): string | null {
+  if (!notes) return null
+  const line = notes.split('\n').find((l) => l.startsWith(`${key}:`))
+  return line ? line.slice(key.length + 1).trim() : null
+}
+
 export type { ApplicationStatus }
 
 export function statusLabel(status: ApplicationStatus): string {

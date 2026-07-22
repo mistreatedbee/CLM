@@ -6,7 +6,7 @@ import { ChevronRight, Download, Search, SlidersHorizontal } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/admin/status-badge'
 import { cn } from '@/lib/utils'
-import { formatDate, type ApplicationStatus } from '@/lib/clm-data'
+import { extractFromNotes, formatDate, type ApplicationStatus } from '@/lib/clm-data'
 import type { ClmApplication } from '@/lib/supabase/types'
 
 const FILTERS: { key: ApplicationStatus | 'all'; label: string }[] = [
@@ -32,7 +32,7 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
       .filter((a) => (filter === 'all' ? true : a.status === filter))
       .filter((a) =>
         query.trim()
-          ? `${a.full_name} ${a.ref} ${a.church_name} ${a.whatsapp ?? ''} ${a.course ?? ''}`
+          ? `${a.full_name} ${a.ref} ${a.church_name} ${a.whatsapp ?? ''} ${a.course ?? extractFromNotes(a.admin_notes, 'Course') ?? ''}`
               .toLowerCase()
               .includes(query.toLowerCase())
           : true,
@@ -113,7 +113,9 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
                   </div>
                 </td>
                 <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{a.ref}</td>
-                <td className="px-6 py-4 text-base text-foreground">{a.course ?? '—'}</td>
+                <td className="px-6 py-4 text-base text-foreground">
+                  {a.course ?? extractFromNotes(a.admin_notes, 'Course') ?? '—'}
+                </td>
                 <td className="px-6 py-4 text-base text-muted-foreground">
                   {formatDate(a.created_at)}
                 </td>
