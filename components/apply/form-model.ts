@@ -1,11 +1,39 @@
+export const COURSES: { group: string; options: string[] }[] = [
+  {
+    group: 'UP-Endorsed Courses',
+    options: [
+      'Pastoral Care Training (Narrative Community-Based)',
+      'Starting and Sustaining Community Projects',
+      'Crisis and Trauma Support',
+      'Early Childhood Development',
+      'Peace Building',
+      'From Victims to Agents',
+      'Narrative Group Counselling (offered by Prof Roelf Schoeman – Centre for Faith and Community)',
+    ],
+  },
+  {
+    group: 'Other Courses',
+    options: [
+      'Moderator (SAQA US 117759)',
+      'Assessor (SAQA US 115753)',
+      'Facilitator (SAQA US 117871)',
+      'Narrative Group Counselling (offered by Apostle Kenny Mokgope)',
+      'Praise and Worship Programme',
+      'Diploma in Theology',
+      'Ordination',
+    ],
+  },
+]
+
 export type ApplicationForm = {
   // Personal
+  course: string
   fullName: string
   idNumber: string
   gender: string
   maritalStatus: string
+  whatsapp: string
   phone: string
-  email: string
   address: string
   country: string
   // Spiritual
@@ -35,12 +63,13 @@ export type ApplicationForm = {
 }
 
 export const emptyForm: ApplicationForm = {
+  course: '',
   fullName: '',
   idNumber: '',
   gender: '',
   maritalStatus: '',
+  whatsapp: '',
   phone: '',
-  email: '',
   address: '',
   country: 'South Africa',
   acceptedDate: '',
@@ -87,8 +116,6 @@ export const STEP_META: Record<StepKey, { title: string; short: string }> = {
   review: { title: 'Review & Submit', short: 'Review' },
 }
 
-const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
 export function validateStep(step: StepKey, f: ApplicationForm): Errors {
   const e: Errors = {}
   const req = (k: keyof ApplicationForm, msg = 'This field is required') => {
@@ -96,16 +123,17 @@ export function validateStep(step: StepKey, f: ApplicationForm): Errors {
   }
 
   if (step === 'personal') {
+    if (!f.course) e.course = 'Please select a course'
     req('fullName', 'Please enter your full name')
     if (!f.idNumber.trim()) e.idNumber = 'Please enter your ID number'
     else if (f.idNumber.replace(/\s/g, '').length < 6)
       e.idNumber = 'Please enter a valid ID number'
     if (!f.gender) e.gender = 'Please choose an option'
     if (!f.maritalStatus) e.maritalStatus = 'Please choose an option'
-    if (!f.phone.trim()) e.phone = 'Please enter your phone number'
+    if (!f.whatsapp.trim()) e.whatsapp = 'Please enter your WhatsApp number'
+    else if (f.whatsapp.replace(/\D/g, '').length < 9) e.whatsapp = 'Please enter a valid WhatsApp number'
+    if (!f.phone.trim()) e.phone = 'Please enter your phone / home number'
     else if (f.phone.replace(/\D/g, '').length < 9) e.phone = 'Please enter a valid phone number'
-    if (!f.email.trim()) e.email = 'Please enter your email'
-    else if (!emailRe.test(f.email)) e.email = 'Please enter a valid email address'
     req('address', 'Please enter your address')
     req('country', 'Please enter your country')
   }

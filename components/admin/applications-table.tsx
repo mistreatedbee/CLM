@@ -32,7 +32,7 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
       .filter((a) => (filter === 'all' ? true : a.status === filter))
       .filter((a) =>
         query.trim()
-          ? `${a.full_name} ${a.ref} ${a.church_name} ${a.email}`
+          ? `${a.full_name} ${a.ref} ${a.church_name} ${a.whatsapp ?? ''} ${a.course ?? ''}`
               .toLowerCase()
               .includes(query.toLowerCase())
           : true,
@@ -92,7 +92,7 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
             <tr className="border-b border-border bg-muted/50 text-left text-sm font-semibold text-muted-foreground">
               <th className="px-6 py-4">Applicant</th>
               <th className="px-6 py-4">Reference</th>
-              <th className="px-6 py-4">Church</th>
+              <th className="px-6 py-4">Course</th>
               <th className="px-6 py-4">Submitted</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4" />
@@ -108,12 +108,12 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
                     </span>
                     <div>
                       <p className="font-semibold text-foreground">{a.full_name}</p>
-                      <p className="text-sm text-muted-foreground">{a.email}</p>
+                      <p className="text-sm text-muted-foreground">{a.whatsapp ?? a.phone}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{a.ref}</td>
-                <td className="px-6 py-4 text-base text-foreground">{a.church_name}</td>
+                <td className="px-6 py-4 text-base text-foreground">{a.course ?? '—'}</td>
                 <td className="px-6 py-4 text-base text-muted-foreground">
                   {formatDate(a.created_at)}
                 </td>

@@ -171,6 +171,61 @@ export function SelectField({
   )
 }
 
+export function GroupedSelectField({
+  id,
+  label,
+  helper,
+  error,
+  value,
+  onChange,
+  groups,
+  placeholder = 'Select a course',
+  required,
+}: {
+  id: string
+  label: string
+  helper?: string
+  error?: string
+  value: string
+  onChange: (v: string) => void
+  groups: { group: string; options: string[] }[]
+  placeholder?: string
+  required?: boolean
+}) {
+  return (
+    <FieldShell label={label} helper={helper} error={error} required={required} htmlFor={id}>
+      <div className="relative">
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={!!error}
+          className={cn(
+            inputBase,
+            'appearance-none pr-12',
+            error ? 'border-destructive' : 'border-input',
+            !value && 'text-muted-foreground/60',
+          )}
+        >
+          <option value="" disabled>
+            {placeholder}
+          </option>
+          {groups.map((g) => (
+            <optgroup key={g.group} label={g.group}>
+              {g.options.map((o) => (
+                <option key={o} value={o} className="text-foreground">
+                  {o}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+      </div>
+    </FieldShell>
+  )
+}
+
 export function YesNo({
   label,
   helper,

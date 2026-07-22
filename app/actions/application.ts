@@ -19,8 +19,8 @@ export async function submitApplication(form: ApplicationForm): Promise<SubmitRe
         id_number: form.idNumber,
         gender: form.gender as 'Male' | 'Female',
         marital_status: form.maritalStatus,
+        whatsapp: form.whatsapp,
         phone: form.phone,
-        email: form.email,
         physical_address: form.address,
         country: form.country,
         accepted_christ_date: form.acceptedDate,
@@ -43,6 +43,7 @@ export async function submitApplication(form: ApplicationForm): Promise<SubmitRe
         reference_relationship: form.referenceRelationship,
         signature: form.signature,
         signature_date: form.signatureDate,
+        course: form.course || null,
         applicant_user_id: user?.id ?? null,
       })
       .select('ref')

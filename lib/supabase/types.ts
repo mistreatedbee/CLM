@@ -47,8 +47,9 @@ export interface Database {
           id_number: string
           gender: 'Male' | 'Female'
           marital_status: string
+          whatsapp: string | null
           phone: string
-          email: string
+          email: string | null
           physical_address: string
           country: string
           accepted_christ_date: string
@@ -71,6 +72,7 @@ export interface Database {
           reference_relationship: string
           signature: string
           signature_date: string
+          course: string | null
           status: ApplicationStatus
           assigned_admin: string | null
           admin_notes: string | null
@@ -85,8 +87,9 @@ export interface Database {
           id_number: string
           gender: 'Male' | 'Female'
           marital_status: string
+          whatsapp?: string | null
           phone: string
-          email: string
+          email?: string | null
           physical_address: string
           country?: string
           accepted_christ_date: string
@@ -109,6 +112,7 @@ export interface Database {
           reference_relationship: string
           signature: string
           signature_date: string
+          course?: string | null
           status?: ApplicationStatus
           assigned_admin?: string | null
           admin_notes?: string | null

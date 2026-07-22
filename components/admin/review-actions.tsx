@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, HelpCircle, MessageSquarePlus, Send, XCircle } from 'lucide-react'
+import { CheckCircle2, Clipboard, ClipboardCheck, HelpCircle, MessageSquarePlus, Send, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/admin/status-badge'
 import { cn } from '@/lib/utils'
@@ -9,20 +9,34 @@ import { statusLabel, type ApplicationStatus } from '@/lib/clm-data'
 import { updateApplicationStatus, addApplicationNote } from '@/app/actions/admin'
 import type { ApplicationNote } from '@/lib/supabase/types'
 
+function buildQuickResponse(name: string, course?: string) {
+  const firstName = name.split(' ')[0]
+  const courseText = course ? ` for the **${course}** course` : ''
+  return `Dear ${firstName},\n\nThank you for submitting your application to CLM${courseText}. We have received your application and it is currently under review.\n\nOur team will be in touch with you shortly regarding the next steps. Should you have any questions in the meantime, please do not hesitate to contact us.\n\nGod bless you,\nThe CLM Team`
+}
+
 export function ReviewActions({
   applicationId,
   initialStatus,
   initialNotes,
+  applicantName,
+  applicantEmail,
+  course,
 }: {
   applicationId: string
   initialStatus: ApplicationStatus
   initialNotes: ApplicationNote[]
+  applicantName: string
+  applicantWhatsapp: string
+  course?: string
 }) {
   const [status, setStatus] = useState<ApplicationStatus>(initialStatus)
   const [notes, setNotes] = useState<ApplicationNote[]>(initialNotes)
   const [draft, setDraft] = useState('')
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [quickResponse, setQuickResponse] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const flash = (msg: string, ok: boolean) => {
     setToast({ msg, ok })
@@ -160,9 +174,43 @@ export function ReviewActions({
         </ul>
       </div>
 
-      <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-input bg-card py-3 text-base font-semibold text-foreground hover:bg-muted">
-        <Send className="size-5" /> Email the applicant
-      </button>
+      <div className="rounded-2xl border border-input bg-card p-5">
+        <h3 className="font-heading text-lg font-bold text-foreground">Quick response</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Generate a ready-to-send acknowledgement for this applicant.
+        </p>
+        <Button
+          onClick={() => {
+            setQuickResponse(buildQuickResponse(applicantName, course))
+            setCopied(false)
+          }}
+          variant="outline"
+          className="mt-4 w-full gap-2"
+        >
+          <Send className="size-5" /> Generate quick response
+        </Button>
+        {quickResponse && (
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>WhatsApp: {applicantWhatsapp}</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(quickResponse)
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                }}
+                className="flex items-center gap-1.5 rounded-lg px-2 py-1 font-semibold text-primary hover:bg-primary/10"
+              >
+                {copied ? <ClipboardCheck className="size-4" /> : <Clipboard className="size-4" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <pre className="whitespace-pre-wrap rounded-xl bg-muted/60 p-4 text-sm leading-relaxed text-foreground">
+              {quickResponse}
+            </pre>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

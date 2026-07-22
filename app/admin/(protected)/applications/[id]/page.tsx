@@ -95,13 +95,16 @@ export default async function ApplicationDetailPage({
         <div className="space-y-6 lg:col-span-2">
           <Card className="space-y-8 p-6">
             <Section title="Personal information">
+              {app.course && (
+                <Field label="Course applied for" value={app.course} />
+              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Full name" value={app.full_name} />
                 <Field label="ID number" value={app.id_number} />
                 <Field label="Gender" value={app.gender} />
                 <Field label="Marital status" value={app.marital_status} />
-                <Field label="Phone" value={app.phone} />
-                <Field label="Email" value={app.email} />
+                <Field label="WhatsApp" value={app.whatsapp} />
+                <Field label="Phone / Home" value={app.phone} />
                 <Field label="Country" value={app.country} />
               </div>
               <Field label="Address" value={app.physical_address} />
@@ -160,6 +163,9 @@ export default async function ApplicationDetailPage({
             applicationId={app.id}
             initialStatus={app.status as ApplicationStatus}
             initialNotes={notes ?? []}
+            applicantName={app.full_name}
+            applicantWhatsapp={app.whatsapp ?? app.phone}
+            course={app.course ?? undefined}
           />
         </div>
       </div>

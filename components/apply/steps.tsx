@@ -1,7 +1,8 @@
 'use client'
 
 import type { ApplicationForm, Errors } from './form-model'
-import { RadioCards, SelectField, TextArea, TextField, YesNo } from './form-fields'
+import { COURSES } from './form-model'
+import { GroupedSelectField, RadioCards, SelectField, TextArea, TextField, YesNo } from './form-fields'
 
 type StepProps = {
   form: ApplicationForm
@@ -12,6 +13,16 @@ type StepProps = {
 export function PersonalStep({ form, set, errors }: StepProps) {
   return (
     <div className="flex flex-col gap-7">
+      <GroupedSelectField
+        id="course"
+        label="Course applying for"
+        helper="Select the course you would like to enrol in."
+        groups={COURSES}
+        value={form.course}
+        onChange={(v) => set('course', v)}
+        error={errors.course}
+        required
+      />
       <TextField
         id="fullName"
         label="Full name"
@@ -52,29 +63,29 @@ export function PersonalStep({ form, set, errors }: StepProps) {
         required
       />
       <TextField
-        id="phone"
-        label="Phone number"
-        helper="We may call or send you an SMS."
+        id="whatsapp"
+        label="WhatsApp number"
+        helper="We will contact you via WhatsApp."
         example="082 445 1290"
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        value={form.whatsapp}
+        onChange={(v) => set('whatsapp', v)}
+        error={errors.whatsapp}
+        required
+      />
+      <TextField
+        id="phone"
+        label="Phone / Home number"
+        helper="Your landline or alternative contact number."
+        example="015 295 3300"
         type="tel"
         inputMode="tel"
         autoComplete="tel"
         value={form.phone}
         onChange={(v) => set('phone', v)}
         error={errors.phone}
-        required
-      />
-      <TextField
-        id="email"
-        label="Email address"
-        helper="We will send your confirmation here."
-        example="grace@example.com"
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        value={form.email}
-        onChange={(v) => set('email', v)}
-        error={errors.email}
         required
       />
       <TextArea
