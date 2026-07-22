@@ -56,7 +56,7 @@ export async function submitApplication(form: ApplicationForm): Promise<SubmitRe
 
     if (error) {
       console.error('Application submit error:', error)
-      return { success: false, error: 'Failed to submit application. Please try again.' }
+      return { success: false, error: `Submit failed: ${error.message} [${error.code}]` }
     }
 
     return { success: true, ref: data.ref }
