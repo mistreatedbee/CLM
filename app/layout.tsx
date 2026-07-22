@@ -16,6 +16,8 @@ const manrope = Manrope({
   display: 'swap',
 })
 
+const APP_URL = 'https://clm-snowy.vercel.app'
+
 export const metadata: Metadata = {
   title: 'Christian Leadership Movement | Transforming Leaders, Transforming the Nations',
   description:
@@ -23,6 +25,29 @@ export const metadata: Metadata = {
   icons: {
     icon: '/images/logo.jpeg',
     apple: '/images/logo.jpeg',
+  },
+  openGraph: {
+    title: 'Christian Leadership Movement',
+    description:
+      'Apply to join the Christian Leadership Movement — developing Christ-centred leaders through training, mentorship, and discipleship across South Africa.',
+    url: APP_URL,
+    siteName: 'Christian Leadership Movement',
+    images: [
+      {
+        url: `${APP_URL}/images/logo.jpeg`,
+        width: 800,
+        height: 800,
+        alt: 'Christian Leadership Movement',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Christian Leadership Movement',
+    description:
+      'Apply to join the Christian Leadership Movement — developing Christ-centred leaders through training, mentorship, and discipleship across South Africa.',
+    images: [`${APP_URL}/images/logo.jpeg`],
   },
 }
 
