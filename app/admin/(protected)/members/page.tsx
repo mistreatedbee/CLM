@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card } from '@/components/ui/card'
-import { Users } from 'lucide-react'
+import { BookOpen, Users } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -25,9 +25,25 @@ export default async function MembersPage() {
   const { data: members } = await supabase
     .from('members')
     .select('*')
+    .order('course', { ascending: true, nullsFirst: false })
     .order('joined_date', { ascending: false })
 
   const list = members ?? []
+
+  // Group members by course
+  const grouped = new Map<string, typeof list>()
+  for (const m of list) {
+    const key = m.course?.trim() || 'Uncategorised'
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(m)
+  }
+
+  // Sort: named courses first, then Uncategorised
+  const sortedGroups = [...grouped.entries()].sort(([a], [b]) => {
+    if (a === 'Uncategorised') return 1
+    if (b === 'Uncategorised') return -1
+    return a.localeCompare(b)
+  })
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -37,7 +53,9 @@ export default async function MembersPage() {
             Members
           </h1>
           <p className="mt-1 text-base text-muted-foreground">
-            {list.length} member{list.length !== 1 ? 's' : ''} registered
+            {list.length} member{list.length !== 1 ? 's' : ''} across{' '}
+            {sortedGroups.filter(([k]) => k !== 'Uncategorised').length} course
+            {sortedGroups.filter(([k]) => k !== 'Uncategorised').length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
@@ -47,85 +65,124 @@ export default async function MembersPage() {
           <Users className="size-12 text-muted-foreground/40" />
           <p className="mt-4 text-base font-medium text-muted-foreground">No members yet.</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Members are added when an application is approved.
+            Members are added automatically when an application is approved.
           </p>
         </Card>
       ) : (
-        <>
-          {/* Desktop table */}
-          <Card className="hidden overflow-hidden md:block">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-muted/50 text-left text-sm font-semibold text-muted-foreground">
-                  <th className="px-6 py-4">Member</th>
-                  <th className="px-6 py-4">Number</th>
-                  <th className="px-6 py-4">Church</th>
-                  <th className="px-6 py-4">Level</th>
-                  <th className="px-6 py-4">Joined</th>
-                  <th className="px-6 py-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {list.map((m) => (
-                  <tr key={m.id} className="hover:bg-muted/40">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary font-heading text-sm font-bold text-primary">
-                          {m.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                        </span>
-                        <div>
-                          <p className="font-semibold text-foreground">{m.full_name}</p>
-                          <p className="text-sm text-muted-foreground">{m.phone}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-mono text-sm text-muted-foreground">{m.member_number}</td>
-                    <td className="px-6 py-4 text-base text-foreground">{m.church}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${LEVEL_COLOURS[m.leadership_level] ?? 'bg-muted text-muted-foreground'}`}>
-                        {m.leadership_level}
+        <div className="space-y-10">
+          {sortedGroups.map(([course, courseMembers]) => (
+            <section key={course}>
+              {/* Course header */}
+              <div className="mb-4 flex items-center gap-3">
+                <div className="grid size-9 place-items-center rounded-xl bg-primary/10">
+                  <BookOpen className="size-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-heading text-lg font-bold text-foreground">{course}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {courseMembers.length} member{courseMembers.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              {/* Desktop table */}
+              <Card className="hidden overflow-hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50 text-left text-sm font-semibold text-muted-foreground">
+                      <th className="px-6 py-4">Member</th>
+                      <th className="px-6 py-4">Number</th>
+                      <th className="px-6 py-4">Church</th>
+                      <th className="px-6 py-4">Level</th>
+                      <th className="px-6 py-4">Joined</th>
+                      <th className="px-6 py-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {courseMembers.map((m) => (
+                      <tr key={m.id} className="hover:bg-muted/40">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary font-heading text-sm font-bold text-primary">
+                              {m.full_name
+                                .split(' ')
+                                .map((n: string) => n[0])
+                                .join('')
+                                .slice(0, 2)}
+                            </span>
+                            <div>
+                              <p className="font-semibold text-foreground">{m.full_name}</p>
+                              <p className="text-sm text-muted-foreground">{m.phone}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-sm text-muted-foreground">
+                          {m.member_number}
+                        </td>
+                        <td className="px-6 py-4 text-base text-foreground">{m.church}</td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${LEVEL_COLOURS[m.leadership_level] ?? 'bg-muted text-muted-foreground'}`}
+                          >
+                            {m.leadership_level}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-base text-muted-foreground">
+                          {new Date(m.joined_date).toLocaleDateString('en-ZA', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold capitalize ${STATUS_COLOURS[m.status] ?? 'bg-muted'}`}
+                          >
+                            {m.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+
+              {/* Mobile cards */}
+              <div className="space-y-3 md:hidden">
+                {courseMembers.map((m) => (
+                  <Card key={m.id} className="p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary font-heading text-sm font-bold text-primary">
+                        {m.full_name
+                          .split(' ')
+                          .map((n: string) => n[0])
+                          .join('')
+                          .slice(0, 2)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-base text-muted-foreground">
-                      {new Date(m.joined_date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold capitalize ${STATUS_COLOURS[m.status] ?? 'bg-muted'}`}>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-foreground">{m.full_name}</p>
+                        <p className="text-sm text-muted-foreground">{m.church}</p>
+                      </div>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_COLOURS[m.status] ?? 'bg-muted'}`}
+                      >
                         {m.status}
                       </span>
-                    </td>
-                  </tr>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                      <span className="font-mono">{m.member_number}</span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${LEVEL_COLOURS[m.leadership_level] ?? 'bg-muted'}`}
+                      >
+                        {m.leadership_level}
+                      </span>
+                    </div>
+                  </Card>
                 ))}
-              </tbody>
-            </table>
-          </Card>
-
-          {/* Mobile cards */}
-          <div className="space-y-3 md:hidden">
-            {list.map((m) => (
-              <Card key={m.id} className="p-4">
-                <div className="flex items-center gap-3">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary font-heading text-sm font-bold text-primary">
-                    {m.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-foreground">{m.full_name}</p>
-                    <p className="text-sm text-muted-foreground">{m.church}</p>
-                  </div>
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_COLOURS[m.status] ?? 'bg-muted'}`}>
-                    {m.status}
-                  </span>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-                  <span className="font-mono">{m.member_number}</span>
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${LEVEL_COLOURS[m.leadership_level] ?? 'bg-muted'}`}>
-                    {m.leadership_level}
-                  </span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </>
+              </div>
+            </section>
+          ))}
+        </div>
       )}
     </div>
   )

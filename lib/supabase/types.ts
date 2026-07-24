@@ -153,6 +153,7 @@ export interface Database {
           phone: string
           email: string | null
           church: string
+          course: string | null
           leadership_level: LeadershipLevel
           status: MemberStatus
           joined_date: string
@@ -167,14 +168,92 @@ export interface Database {
           phone: string
           email?: string | null
           church: string
+          course?: string | null
           leadership_level?: LeadershipLevel
           status?: MemberStatus
           joined_date?: string
         }
         Update: {
+          course?: string | null
           leadership_level?: LeadershipLevel
           status?: MemberStatus
           updated_at?: string
+        }
+      }
+      whatsapp_templates: {
+        Row: {
+          id: string
+          name: string
+          trigger_type: string
+          body: string
+          active: boolean
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          trigger_type: string
+          body: string
+          active?: boolean
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          name?: string
+          trigger_type?: string
+          body?: string
+          active?: boolean
+          is_default?: boolean
+          updated_at?: string
+        }
+      }
+      whatsapp_logs: {
+        Row: {
+          id: string
+          application_id: string | null
+          applicant_name: string
+          whatsapp_number: string
+          template_id: string | null
+          template_name: string | null
+          message_body: string
+          trigger_type: string
+          sent_by: string
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          application_id?: string | null
+          applicant_name: string
+          whatsapp_number: string
+          template_id?: string | null
+          template_name?: string | null
+          message_body: string
+          trigger_type: string
+          sent_by?: string
+          sent_at?: string
+        }
+        Update: never
+      }
+      whatsapp_settings: {
+        Row: {
+          id: number
+          auto_send_on_submission: boolean
+          auto_send_on_approval: boolean
+          auto_send_on_rejection: boolean
+        }
+        Insert: {
+          id?: number
+          auto_send_on_submission?: boolean
+          auto_send_on_approval?: boolean
+          auto_send_on_rejection?: boolean
+        }
+        Update: {
+          auto_send_on_submission?: boolean
+          auto_send_on_approval?: boolean
+          auto_send_on_rejection?: boolean
         }
       }
       notifications: {
@@ -250,3 +329,6 @@ export type ApplicationNote = Database['public']['Tables']['application_notes'][
 export type Member = Database['public']['Tables']['members']['Row']
 export type Notification = Database['public']['Tables']['notifications']['Row']
 export type AuditLog = Database['public']['Tables']['audit_logs']['Row']
+export type WhatsAppTemplate = Database['public']['Tables']['whatsapp_templates']['Row']
+export type WhatsAppLog = Database['public']['Tables']['whatsapp_logs']['Row']
+export type WhatsAppSettings = Database['public']['Tables']['whatsapp_settings']['Row']

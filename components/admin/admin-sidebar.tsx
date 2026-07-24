@@ -7,6 +7,7 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  MessageCircle,
   Settings,
   Users,
   X,
@@ -20,6 +21,7 @@ const NAV = [
   { href: '/admin/applications', label: 'Applications', icon: FileText },
   { href: '/admin/members', label: 'Members', icon: Users },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
+  { href: '/admin/whatsapp', label: 'WhatsApp', icon: MessageCircle },
 ]
 
 export function AdminSidebar({

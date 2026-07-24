@@ -2,9 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { buildWhatsAppUrl, replacePlaceholders } from '@/lib/whatsapp'
+import { statusLabel, formatDate } from '@/lib/clm-data'
 import type { ApplicationStatus } from '@/lib/supabase/types'
 
-export type ActionResult = { success: true } | { success: false; error: string }
+export type ActionResult =
+  | { success: true; whatsappAction?: { url: string; message: string; templateName: string } }
+  | { success: false; error: string }
 
 export async function updateApplicationStatus(
   applicationId: string,
@@ -12,11 +16,11 @@ export async function updateApplicationStatus(
   applicantName: string,
 ): Promise<ActionResult> {
   try {
-    const [supabase, adminSupabase] = await Promise.all([createClient(), createAdminClient()])
+    const adminSupabase = await createAdminClient()
 
-    // When approving, the DB trigger creates a member record and requires a non-null email.
-    // Since the form no longer collects email, we set it from whatsapp/phone so the trigger succeeds.
     let updatePayload: Record<string, unknown> = { status }
+
+    // When approving, ensure email is set so the DB trigger can create the member record
     if (status === 'approved') {
       const { data: app } = await adminSupabase
         .from('clm_applications')
@@ -41,6 +45,63 @@ export async function updateApplicationStatus(
     revalidatePath('/admin/applications')
     revalidatePath(`/admin/applications/${applicationId}`)
     revalidatePath('/admin')
+    revalidatePath('/admin/members')
+
+    // Auto-send WhatsApp if configured
+    try {
+      const { data: settings } = await adminSupabase
+        .from('whatsapp_settings')
+        .select('*')
+        .single()
+
+      const shouldAutoSend =
+        (status === 'approved' && settings?.auto_send_on_approval) ||
+        (status === 'rejected' && settings?.auto_send_on_rejection)
+
+      if (shouldAutoSend) {
+        const { data: app } = await adminSupabase
+          .from('clm_applications')
+          .select('whatsapp, phone, course, created_at')
+          .eq('id', applicationId)
+          .single()
+
+        const { data: templates } = await adminSupabase
+          .from('whatsapp_templates')
+          .select('*')
+          .eq('trigger_type', status)
+          .eq('active', true)
+          .limit(1)
+
+        if (templates?.length && app) {
+          const template = templates[0]
+          const whatsappNumber = app.whatsapp ?? app.phone ?? ''
+          const message = replacePlaceholders(template.body, {
+            applicantName,
+            courseName: app.course ?? 'the course',
+            applicationId,
+            applicationStatus: statusLabel(status),
+            submissionDate: formatDate(app.created_at),
+          })
+          const url = buildWhatsAppUrl(whatsappNumber, message)
+
+          await adminSupabase.from('whatsapp_logs').insert({
+            application_id: applicationId,
+            applicant_name: applicantName,
+            whatsapp_number: whatsappNumber,
+            template_id: template.id,
+            template_name: template.name,
+            message_body: message,
+            trigger_type: `auto_${status}`,
+            sent_by: 'system',
+          })
+
+          return { success: true, whatsappAction: { url, message, templateName: template.name } }
+        }
+      }
+    } catch {
+      // WhatsApp tables not yet configured — skip silently
+    }
+
     return { success: true }
   } catch {
     return { success: false, error: 'Unexpected error.' }
@@ -63,14 +124,12 @@ export async function addApplicationNote(
       .eq('id', user.id)
       .single()
 
-    const { error } = await supabase
-      .from('application_notes')
-      .insert({
-        application_id: applicationId,
-        author_id: user.id,
-        author_name: profile?.full_name ?? user.email ?? 'Admin',
-        text,
-      })
+    const { error } = await supabase.from('application_notes').insert({
+      application_id: applicationId,
+      author_id: user.id,
+      author_name: profile?.full_name ?? user.email ?? 'Admin',
+      text,
+    })
 
     if (error) {
       console.error('Note insert error:', error)
@@ -90,14 +149,11 @@ export async function updateAdminNotes(
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
-
     const { error } = await supabase
       .from('clm_applications')
       .update({ admin_notes: notes })
       .eq('id', applicationId)
-
     if (error) return { success: false, error: 'Failed to save notes.' }
-
     revalidatePath(`/admin/applications/${applicationId}`)
     return { success: true }
   } catch {

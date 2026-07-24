@@ -67,6 +67,29 @@ export default async function ApplicationDetailPage({
 
   if (!app) notFound()
 
+  // WhatsApp data — gracefully handle missing tables (migration not yet run)
+  const [waLogsResult, waTemplatesResult, waSettingsResult] = await Promise.allSettled([
+    supabase
+      .from('whatsapp_logs')
+      .select('*')
+      .eq('application_id', id)
+      .order('sent_at', { ascending: false }),
+    supabase
+      .from('whatsapp_templates')
+      .select('*')
+      .eq('active', true)
+      .order('trigger_type')
+      .order('name'),
+    supabase.from('whatsapp_settings').select('*').single(),
+  ])
+
+  const waLogs =
+    waLogsResult.status === 'fulfilled' ? (waLogsResult.value.data ?? []) : []
+  const waTemplates =
+    waTemplatesResult.status === 'fulfilled' ? (waTemplatesResult.value.data ?? []) : []
+  const waSettings =
+    waSettingsResult.status === 'fulfilled' ? waSettingsResult.value.data : null
+
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-6">
@@ -107,7 +130,10 @@ export default async function ApplicationDetailPage({
                 <Field label="WhatsApp" value={app.whatsapp ?? app.phone} />
                 <Field
                   label="Phone / Home"
-                  value={extractFromNotes(app.admin_notes, 'Home/Phone') ?? (app.whatsapp ? app.phone : null)}
+                  value={
+                    extractFromNotes(app.admin_notes, 'Home/Phone') ??
+                    (app.whatsapp ? app.phone : null)
+                  }
                 />
                 <Field label="Country" value={app.country} />
               </div>
@@ -170,6 +196,10 @@ export default async function ApplicationDetailPage({
             applicantName={app.full_name}
             applicantWhatsapp={app.whatsapp ?? app.phone}
             course={app.course ?? extractFromNotes(app.admin_notes, 'Course') ?? undefined}
+            submissionDate={formatDate(app.created_at)}
+            initialWaLogs={waLogs ?? []}
+            waTemplates={waTemplates ?? []}
+            waSettings={waSettings ?? null}
           />
         </div>
       </div>
