@@ -1,8 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronRight, Download, MessageCircle, Search, SlidersHorizontal } from 'lucide-react'
+import { Download, MessageCircle, Search, SlidersHorizontal } from 'lucide-react'
 import { buildWhatsAppUrl, formatWhatsAppNumber } from '@/lib/whatsapp'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/admin/status-badge'
@@ -19,6 +20,7 @@ const FILTERS: { key: ApplicationStatus | 'all'; label: string }[] = [
 ]
 
 export function ApplicationsTable({ applications }: { applications: ClmApplication[] }) {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<ApplicationStatus | 'all'>('all')
 
@@ -106,7 +108,11 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
                 ? buildWhatsAppUrl(waNumber)
                 : null
               return (
-              <tr key={a.id} className="group transition hover:bg-muted/40">
+              <tr
+                key={a.id}
+                onClick={() => router.push(`/admin/applications/${a.id}`)}
+                className="group cursor-pointer transition hover:bg-muted/40"
+              >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary font-heading text-sm font-bold text-primary">
@@ -129,25 +135,18 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
                   <StatusBadge status={a.status} />
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    {waUrl && (
-                      <a
-                        href={waUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={`Open WhatsApp for ${a.full_name}`}
-                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm font-semibold text-[#25D366] hover:bg-[#25D366]/10"
-                      >
-                        <MessageCircle className="size-4" />
-                      </a>
-                    )}
-                    <Link
-                      href={`/admin/applications/${a.id}`}
-                      className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10"
+                  {waUrl && (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Open WhatsApp for ${a.full_name}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm font-semibold text-[#25D366] hover:bg-[#25D366]/10"
                     >
-                      Review <ChevronRight className="size-4" />
-                    </Link>
-                  </div>
+                      <MessageCircle className="size-4" />
+                    </a>
+                  )}
                 </td>
               </tr>
               )
