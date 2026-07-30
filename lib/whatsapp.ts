@@ -2,7 +2,6 @@ export type WaTriggerType = 'submission' | 'approved' | 'rejected' | 'info_reque
 
 export interface MessageContext {
   applicantName: string
-  courseName: string
   applicationId: string
   applicationStatus: string
   submissionDate: string
@@ -32,7 +31,6 @@ export function buildWhatsAppUrl(rawNumber: string, message?: string): string {
 export function replacePlaceholders(template: string, ctx: MessageContext): string {
   return template
     .replace(/\{\{ApplicantName\}\}/g, ctx.applicantName)
-    .replace(/\{\{CourseName\}\}/g, ctx.courseName || 'the course')
     .replace(/\{\{ApplicationID\}\}/g, ctx.applicationId)
     .replace(/\{\{ApplicationStatus\}\}/g, ctx.applicationStatus)
     .replace(/\{\{SubmissionDate\}\}/g, ctx.submissionDate)

@@ -40,7 +40,6 @@ export function ReviewActions({
   initialNotes,
   applicantName,
   applicantWhatsapp,
-  course,
   submissionDate,
   initialWaLogs,
   waTemplates,
@@ -51,7 +50,6 @@ export function ReviewActions({
   initialNotes: ApplicationNote[]
   applicantName: string
   applicantWhatsapp: string
-  course?: string
   submissionDate: string
   initialWaLogs: WhatsAppLog[]
   waTemplates: WhatsAppTemplate[]
@@ -80,12 +78,11 @@ export function ReviewActions({
   const messageCtx = useMemo(
     () => ({
       applicantName,
-      courseName: course ?? 'the course',
       applicationId,
       applicationStatus: statusLabel(status),
       submissionDate,
     }),
-    [applicantName, course, applicationId, status, submissionDate],
+    [applicantName, applicationId, status, submissionDate],
   )
 
   const messagePreview = useMemo(() => {

@@ -31,7 +31,7 @@ export default async function ReportsPage() {
     { data: apps },
     { data: members },
   ] = await Promise.all([
-    supabase.from('clm_applications').select('status, gender, course, created_at'),
+    supabase.from('clm_applications').select('status, gender, created_at'),
     supabase.from('members').select('leadership_level, status'),
   ])
 
@@ -46,14 +46,6 @@ export default async function ReportsPage() {
   // Applications by gender
   const byGender: Record<string, number> = {}
   for (const a of allApps) byGender[a.gender] = (byGender[a.gender] ?? 0) + 1
-
-  // Applications by course
-  const byCourse: Record<string, number> = {}
-  for (const a of allApps) {
-    const c = a.course ?? 'Not specified'
-    byCourse[c] = (byCourse[c] ?? 0) + 1
-  }
-  const courseEntries = Object.entries(byCourse).sort((a, b) => b[1] - a[1])
 
   // Applications by month (last 6)
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -155,18 +147,6 @@ export default async function ReportsPage() {
                 </div>
               ))}
             </div>
-          )}
-        </Card>
-
-        {/* Applications by course */}
-        <Card className="p-6">
-          <h2 className="font-heading text-lg font-bold text-foreground mb-4">Applications by course</h2>
-          {courseEntries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No applications yet.</p>
-          ) : (
-            courseEntries.map(([course, count]) => (
-              <StatRow key={course} label={course} value={count} total={total} />
-            ))
           )}
         </Card>
 

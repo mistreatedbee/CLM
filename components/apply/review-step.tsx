@@ -56,7 +56,6 @@ export function ReviewStep({
   return (
     <div className="flex flex-col gap-5">
       <Section title="Personal Information" step="personal" onEdit={onEdit}>
-        <Row label="Course" value={form.course} />
         <Row label="Full name" value={form.fullName} />
         <Row label="ID number" value={form.idNumber} />
         <Row label="Gender" value={form.gender} />

@@ -26,7 +26,6 @@ const TRIGGER_COLOURS: Record<string, string> = {
 
 const PLACEHOLDERS = [
   '{{ApplicantName}}',
-  '{{CourseName}}',
   '{{ApplicationID}}',
   '{{ApplicationStatus}}',
   '{{SubmissionDate}}',

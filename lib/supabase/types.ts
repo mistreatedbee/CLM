@@ -38,6 +38,7 @@ export interface Database {
           avatar_url?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       clm_applications: {
         Row: {
@@ -72,7 +73,6 @@ export interface Database {
           reference_relationship: string
           signature: string
           signature_date: string
-          course: string | null
           status: ApplicationStatus
           assigned_admin: string | null
           admin_notes: string | null
@@ -112,7 +112,6 @@ export interface Database {
           reference_relationship: string
           signature: string
           signature_date: string
-          course?: string | null
           status?: ApplicationStatus
           assigned_admin?: string | null
           admin_notes?: string | null
@@ -120,10 +119,12 @@ export interface Database {
         }
         Update: {
           status?: ApplicationStatus
+          email?: string | null
           assigned_admin?: string | null
           admin_notes?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       application_notes: {
         Row: {
@@ -143,6 +144,7 @@ export interface Database {
           created_at?: string
         }
         Update: never
+        Relationships: []
       }
       members: {
         Row: {
@@ -153,7 +155,6 @@ export interface Database {
           phone: string
           email: string | null
           church: string
-          course: string | null
           leadership_level: LeadershipLevel
           status: MemberStatus
           joined_date: string
@@ -168,17 +169,24 @@ export interface Database {
           phone: string
           email?: string | null
           church: string
-          course?: string | null
           leadership_level?: LeadershipLevel
           status?: MemberStatus
           joined_date?: string
         }
         Update: {
-          course?: string | null
           leadership_level?: LeadershipLevel
           status?: MemberStatus
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "members_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "clm_applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_templates: {
         Row: {
@@ -209,6 +217,7 @@ export interface Database {
           is_default?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
       whatsapp_logs: {
         Row: {
@@ -236,6 +245,7 @@ export interface Database {
           sent_at?: string
         }
         Update: never
+        Relationships: []
       }
       whatsapp_settings: {
         Row: {
@@ -255,6 +265,7 @@ export interface Database {
           auto_send_on_approval?: boolean
           auto_send_on_rejection?: boolean
         }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -278,6 +289,7 @@ export interface Database {
         Update: {
           read?: boolean
         }
+        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -303,8 +315,10 @@ export interface Database {
           created_at?: string
         }
         Update: never
+        Relationships: []
       }
     }
+    Views: Record<string, never>
     Functions: {
       generate_clm_ref: {
         Args: Record<never, never>

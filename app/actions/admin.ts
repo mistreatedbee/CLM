@@ -18,7 +18,7 @@ export async function updateApplicationStatus(
   try {
     const adminSupabase = await createAdminClient()
 
-    let updatePayload: Record<string, unknown> = { status }
+    let updatePayload: { status: ApplicationStatus; email?: string } = { status }
 
     // When approving, ensure email is set so the DB trigger can create the member record
     if (status === 'approved') {
@@ -61,7 +61,7 @@ export async function updateApplicationStatus(
       if (shouldAutoSend) {
         const { data: app } = await adminSupabase
           .from('clm_applications')
-          .select('whatsapp, phone, course, created_at')
+          .select('whatsapp, phone, created_at')
           .eq('id', applicationId)
           .single()
 
@@ -77,7 +77,6 @@ export async function updateApplicationStatus(
           const whatsappNumber = app.whatsapp ?? app.phone ?? ''
           const message = replacePlaceholders(template.body, {
             applicantName,
-            courseName: app.course ?? 'the course',
             applicationId,
             applicationStatus: statusLabel(status),
             submissionDate: formatDate(app.created_at),

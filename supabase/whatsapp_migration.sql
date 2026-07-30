@@ -137,7 +137,7 @@ insert into public.whatsapp_templates (name, trigger_type, body, is_default) val
   'submission',
   'Hello {{ApplicantName}},
 
-Thank you for applying for the *{{CourseName}}* at Christian Leadership Movement (CLM).
+Thank you for applying for membership at Christian Leadership Movement (CLM).
 
 Your application has been received successfully and is currently being reviewed by our admissions team.
 
@@ -152,7 +152,7 @@ CLM Admissions Team',
   'approved',
   'Congratulations {{ApplicantName}}!
 
-Your application for the *{{CourseName}}* has been approved.
+Your membership application has been approved.
 
 We will contact you shortly with registration details and the next steps.
 
@@ -169,7 +169,7 @@ CLM Admissions Team',
 
 Thank you for your interest in Christian Leadership Movement (CLM).
 
-After careful consideration, we regret to inform you that your application for the *{{CourseName}}* was not successful at this time.
+After careful consideration, we regret to inform you that your membership application was not successful at this time.
 
 We appreciate your interest and sincerely encourage you to apply again in the future.
 
@@ -182,7 +182,7 @@ CLM Admissions Team',
   'info_requested',
   'Hello {{ApplicantName}},
 
-Thank you for your application to CLM for the *{{CourseName}}*.
+Thank you for your membership application to CLM.
 
 Our admissions team is reviewing your application and requires some additional information before we can proceed.
 
@@ -197,7 +197,7 @@ CLM Admissions Team',
   'manual',
   'Hello {{ApplicantName}},
 
-Thank you for applying to the *{{CourseName}}* at Christian Leadership Movement (CLM).
+Thank you for applying for membership at Christian Leadership Movement (CLM).
 
 We have successfully received your application and it is currently being reviewed.
 

@@ -1,12 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card } from '@/components/ui/card'
-import { BookOpen, ExternalLink, Users } from 'lucide-react'
+import { Layers, ExternalLink, Users } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Members | CLM Admin',
 }
+
+const LEVEL_ORDER = ['Trainee', 'Deacon', 'Elder', 'Leader']
 
 const LEVEL_COLOURS: Record<string, string> = {
   Trainee: 'bg-gold/15 text-[color:var(--gold-strong)]',
@@ -40,7 +42,7 @@ export default async function MembersPage() {
     .select(`
       *,
       application:clm_applications (
-        id, ref, course, id_number, gender, marital_status,
+        id, ref, id_number, gender, marital_status,
         whatsapp, phone, physical_address, country,
         accepted_christ_date, baptized, attends_church,
         church_name, church_denomination, pastor_name,
@@ -55,21 +57,17 @@ export default async function MembersPage() {
 
   const list = members ?? []
 
-  // Group by course from the linked application
+  // Group by leadership level
   const grouped = new Map<string, typeof list>()
   for (const m of list) {
-    const key = (m.application as { course?: string } | null)?.course?.trim() || 'Uncategorised'
+    const key = m.leadership_level || 'Trainee'
     if (!grouped.has(key)) grouped.set(key, [])
     grouped.get(key)!.push(m)
   }
 
-  const sortedGroups = [...grouped.entries()].sort(([a], [b]) => {
-    if (a === 'Uncategorised') return 1
-    if (b === 'Uncategorised') return -1
-    return a.localeCompare(b)
-  })
-
-  const courseCount = sortedGroups.filter(([k]) => k !== 'Uncategorised').length
+  const sortedGroups = [...grouped.entries()].sort(
+    ([a], [b]) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b),
+  )
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -80,7 +78,7 @@ export default async function MembersPage() {
           </h1>
           <p className="mt-1 text-base text-muted-foreground">
             {list.length} member{list.length !== 1 ? 's' : ''} across{' '}
-            {courseCount} course{courseCount !== 1 ? 's' : ''}
+            {sortedGroups.length} leadership level{sortedGroups.length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
@@ -95,24 +93,24 @@ export default async function MembersPage() {
         </Card>
       ) : (
         <div className="space-y-10">
-          {sortedGroups.map(([course, courseMembers]) => (
-            <section key={course}>
+          {sortedGroups.map(([level, levelMembers]) => (
+            <section key={level}>
               <div className="mb-4 flex items-center gap-3">
                 <div className="grid size-9 place-items-center rounded-xl bg-primary/10">
-                  <BookOpen className="size-5 text-primary" />
+                  <Layers className="size-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-foreground">{course}</h2>
+                  <h2 className="font-heading text-lg font-bold text-foreground">{level}</h2>
                   <p className="text-sm text-muted-foreground">
-                    {courseMembers.length} member{courseMembers.length !== 1 ? 's' : ''}
+                    {levelMembers.length} member{levelMembers.length !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-4">
-                {courseMembers.map((m) => {
+                {levelMembers.map((m) => {
                   type AppData = {
-                    id: string; ref: string; course?: string; id_number?: string;
+                    id: string; ref: string; id_number?: string;
                     gender?: string; marital_status?: string; whatsapp?: string;
                     phone?: string; physical_address?: string; country?: string;
                     accepted_christ_date?: string; baptized?: boolean;

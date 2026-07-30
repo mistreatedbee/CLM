@@ -1,8 +1,7 @@
 'use client'
 
 import type { ApplicationForm, Errors } from './form-model'
-import { COURSES } from './form-model'
-import { GroupedSelectField, RadioCards, SelectField, TextArea, TextField, YesNo } from './form-fields'
+import { RadioCards, SelectField, TextArea, TextField, YesNo } from './form-fields'
 
 type StepProps = {
   form: ApplicationForm
@@ -13,16 +12,6 @@ type StepProps = {
 export function PersonalStep({ form, set, errors }: StepProps) {
   return (
     <div className="flex flex-col gap-7">
-      <GroupedSelectField
-        id="course"
-        label="Course applying for"
-        helper="Select the course you would like to enrol in."
-        groups={COURSES}
-        value={form.course}
-        onChange={(v) => set('course', v)}
-        error={errors.course}
-        required
-      />
       <TextField
         id="fullName"
         label="Full name"

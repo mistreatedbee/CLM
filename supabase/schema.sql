@@ -92,7 +92,6 @@ create table public.clm_applications (
   whatsapp           text,
   phone              text not null,
   email              text,
-  course             text,
   physical_address   text not null,
   country            text not null default 'South Africa',
 
@@ -329,6 +328,6 @@ create policy "Admins view audit logs" on public.audit_logs
 -- MIGRATION: Run these in Supabase SQL Editor if tables already exist
 -- ============================================================
 -- ALTER TABLE public.clm_applications ADD COLUMN IF NOT EXISTS whatsapp text;
--- ALTER TABLE public.clm_applications ADD COLUMN IF NOT EXISTS course text;
 -- ALTER TABLE public.clm_applications ALTER COLUMN email DROP NOT NULL;
+-- See remove_course_field.sql to drop the stray `course` column on existing installs.
 -- ALTER TABLE public.members ALTER COLUMN email DROP NOT NULL;

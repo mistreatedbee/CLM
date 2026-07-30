@@ -21,7 +21,6 @@ export async function submitApplication(form: ApplicationForm): Promise<SubmitRe
         marital_status: form.maritalStatus,
         whatsapp: form.whatsapp,
         phone: form.phone,
-        course: form.course || null,
         email: null,
         physical_address: form.address,
         country: form.country,
