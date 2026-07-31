@@ -42,6 +42,43 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
       )
   }, [query, filter, applications])
 
+  const exportCsv = () => {
+    const columns: { label: string; get: (a: ClmApplication) => string }[] = [
+      { label: 'Reference', get: (a) => a.ref },
+      { label: 'Full name', get: (a) => a.full_name },
+      { label: 'ID number', get: (a) => a.id_number },
+      { label: 'Gender', get: (a) => a.gender },
+      { label: 'Marital status', get: (a) => a.marital_status },
+      { label: 'Phone', get: (a) => a.phone ?? '' },
+      { label: 'WhatsApp', get: (a) => a.whatsapp ?? '' },
+      { label: 'Email', get: (a) => a.email ?? '' },
+      { label: 'Address', get: (a) => a.physical_address },
+      { label: 'Country', get: (a) => a.country },
+      { label: 'Church', get: (a) => a.church_name },
+      { label: 'Denomination', get: (a) => a.church_denomination },
+      { label: 'Status', get: (a) => a.status },
+      { label: 'Submitted', get: (a) => a.created_at },
+    ]
+
+    const escapeCell = (value: string) => `"${value.replace(/"/g, '""')}"`
+    const rows = [
+      columns.map((c) => escapeCell(c.label)).join(','),
+      ...filtered.map((a) => columns.map((c) => escapeCell(c.get(a) ?? '')).join(',')),
+    ]
+    const csv = rows.join('\r\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const date = new Date().toISOString().slice(0, 10)
+    link.href = url
+    link.download = `clm-applications-${date}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -58,7 +95,11 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
         <button className="inline-flex h-12 items-center gap-2 rounded-xl border border-input bg-card px-4 text-base font-medium text-foreground hover:bg-muted">
           <SlidersHorizontal className="size-5" /> Filters
         </button>
-        <button className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-4 text-base font-semibold text-primary-foreground hover:opacity-90">
+        <button
+          onClick={exportCsv}
+          disabled={filtered.length === 0}
+          className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-4 text-base font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
           <Download className="size-5" /> Export
         </button>
       </div>
