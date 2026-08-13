@@ -19,6 +19,7 @@ const manrope = Manrope({
 const APP_URL = 'https://clm-snowy.vercel.app'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: 'Christian Leadership Movement | Transforming Leaders, Transforming the Nations',
   description:
     'Apply to join the Christian Leadership Movement — developing Christ-centred leaders through training, mentorship, and discipleship across South Africa.',
