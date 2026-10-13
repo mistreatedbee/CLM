@@ -38,6 +38,8 @@ import {
   VisionStep,
 } from './steps'
 import { ReviewStep } from './review-step'
+import { CourseStep } from './course-step'
+import type { PublicCourse } from '@/lib/courses'
 
 const DRAFT_KEY = 'clm-application-draft'
 
@@ -46,13 +48,14 @@ type SaveState = 'idle' | 'saving' | 'saved'
 
 function hasContent(f: ApplicationForm) {
   return Object.entries(f).some(([k, v]) => {
-    if (k === 'country') return false
+    if (k === 'country' || k === 'courseId') return false
     if (typeof v === 'boolean') return true
     return typeof v === 'string' && v.trim().length > 0
   })
 }
 
-export function ApplicationWizard() {
+export function ApplicationWizard({ courses }: { courses: PublicCourse[] }) {
+  const openCourses = courses.filter((c) => c.open_for_applications)
   const [phase, setPhase] = useState<Phase>('welcome')
   const [stepIndex, setStepIndex] = useState(0)
   const [form, setForm] = useState<ApplicationForm>(emptyForm)
@@ -73,7 +76,10 @@ export function ApplicationWizard() {
       if (raw) {
         const parsed = JSON.parse(raw)
         if (parsed?.form && hasContent(parsed.form)) {
-          setForm({ ...emptyForm, ...parsed.form })
+          const saved = { ...emptyForm, ...parsed.form }
+          // A course chosen earlier may since have closed.
+          if (saved.courseId && !openCourses.some((c) => c.id === saved.courseId)) saved.courseId = ''
+          setForm(saved)
           setDraftFound(true)
         }
       }
@@ -205,12 +211,15 @@ export function ApplicationWizard() {
           <SaveBadge state={saveState} />
         </div>
 
+        {stepKey === 'course' && (
+          <CourseStep courses={openCourses} value={form.courseId} onChange={(id) => set('courseId', id)} />
+        )}
         {stepKey === 'personal' && <PersonalStep form={form} set={set} errors={errors} />}
         {stepKey === 'spiritual' && <SpiritualStep form={form} set={set} errors={errors} />}
         {stepKey === 'leadership' && <LeadershipStep form={form} set={set} errors={errors} />}
         {stepKey === 'vision' && <VisionStep form={form} set={set} errors={errors} />}
         {stepKey === 'references' && <ReferencesStep form={form} set={set} errors={errors} />}
-        {stepKey === 'review' && <ReviewStep form={form} onEdit={editStep} />}
+        {stepKey === 'review' && <ReviewStep form={form} courses={openCourses} onEdit={editStep} />}
 
         {stepKey === 'review' && (
           <>

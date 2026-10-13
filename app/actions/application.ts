@@ -45,12 +45,19 @@ export async function submitApplication(form: ApplicationForm): Promise<SubmitRe
         signature: form.signature,
         signature_date: form.signatureDate,
         applicant_user_id: user?.id ?? null,
+        // Only sent when chosen, so membership applications also work before
+        // the courses migration has been run. The database sets the course
+        // name and fees itself and rejects closed courses.
+        ...(/^[0-9a-f-]{36}$/.test(form.courseId ?? '') ? { course_id: form.courseId } : {}),
       })
       .select('ref')
       .single()
 
     if (error) {
       console.error('Application submit error:', error)
+      if (error.message?.includes('COURSE_CLOSED')) {
+        return { success: false, error: 'Sorry, the course you chose is no longer taking applications. Please go back and choose another course or membership only.' }
+      }
       return { success: false, error: 'Failed to submit application. Please try again.' }
     }
 

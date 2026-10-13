@@ -7,6 +7,7 @@ import { ReviewActions } from '@/components/admin/review-actions'
 import { createClient } from '@/lib/supabase/server'
 import { extractFromNotes, formatDate } from '@/lib/clm-data'
 import type { ApplicationStatus } from '@/lib/clm-data'
+import { formatMoney, type PriceQuote } from '@/lib/courses'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -117,6 +118,19 @@ export default async function ApplicationDetailPage({
         {/* Application details */}
         <div className="space-y-6 lg:col-span-2">
           <Card className="space-y-8 p-6">
+            <Section title="Course">
+              <Field label="Applying for" value={app.course_name ?? 'Membership only (no course)'} />
+              {app.price_snapshot && (() => {
+                const p = app.price_snapshot as unknown as PriceQuote
+                return (
+                  <Field
+                    label="Fees quoted at submission (fixed)"
+                    value={`${formatMoney(p.total, p.currency)} — course ${formatMoney(p.course_fee, p.currency)} + registration ${formatMoney(p.registration_fee, p.currency)}`}
+                  />
+                )
+              })()}
+            </Section>
+
             <Section title="Personal information">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Full name" value={app.full_name} />

@@ -10,6 +10,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { SiteFooter } from '@/components/site/site-footer'
 import { AccessibilityToolbar } from '@/components/accessibility/accessibility-toolbar'
+import { getPublicCourses } from '@/lib/courses-server'
+import { formatMoney, studyModeLabel } from '@/lib/courses'
+
+// Courses and fees come from the admin panel; render with the latest values.
+export const dynamic = 'force-dynamic'
 
 const WHY_JOIN = [
   {
@@ -34,7 +39,8 @@ const WHY_JOIN = [
   },
 ]
 
-export default function HomePage() {
+export default async function HomePage() {
+  const courses = await getPublicCourses()
   return (
     <div className="flex min-h-screen flex-col">
       {/* ── Hero ── */}
@@ -85,6 +91,49 @@ export default function HomePage() {
           Free to apply · Takes about 15 minutes · Saves automatically
         </p>
       </main>
+
+      {/* ── Courses (managed in Admin > Courses & fees) ── */}
+      {courses.length > 0 && (
+        <section className="px-4 py-20 sm:px-6" aria-labelledby="courses-heading">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-12 text-center">
+              <h2 id="courses-heading" className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+                Online ministry courses
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+                Answer the call. Grow in purpose. Serve with excellence.
+              </p>
+            </div>
+            <div className="grid gap-6 md:grid-cols-3">
+              {courses.map((c) => (
+                <div key={c.id} className="flex flex-col rounded-2xl border border-border bg-card p-7 shadow-sm">
+                  <h3 className="font-heading text-xl font-bold text-foreground">{c.name}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {[c.duration, studyModeLabel(c.study_mode)].filter(Boolean).join(' · ')}
+                  </p>
+                  {c.description && <p className="mt-3 text-base leading-relaxed text-muted-foreground">{c.description}</p>}
+                  <div className="mt-auto pt-5 text-base text-foreground">
+                    {c.price ? (
+                      <>
+                        <p>Registration fee: <strong>{formatMoney(c.price.registration_fee, c.price.currency)}</strong></p>
+                        <p>Course: <strong>{formatMoney(c.price.course_fee, c.price.currency)}</strong></p>
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground">Fees to be confirmed</p>
+                    )}
+                    {!c.open_for_applications && <p className="mt-2 text-sm font-semibold text-muted-foreground">Applications currently closed</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-10 text-center">
+              <Link href="/apply">
+                <Button className="gap-2 px-8">Register now <ArrowRight className="size-4" /></Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Why Join ── */}
       <section className="bg-secondary/50 px-4 py-20 sm:px-6">

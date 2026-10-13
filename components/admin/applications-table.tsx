@@ -46,6 +46,11 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
     const columns: { label: string; get: (a: ClmApplication) => string }[] = [
       { label: 'Reference', get: (a) => a.ref },
       { label: 'Full name', get: (a) => a.full_name },
+      { label: 'Course', get: (a) => a.course_name ?? 'Membership only' },
+      { label: 'Fees quoted', get: (a) => {
+        const p = a.price_snapshot as { total?: number | string; currency?: string } | null
+        return p?.total != null ? `${p.currency ?? ''} ${Number(p.total).toFixed(2)}`.trim() : ''
+      } },
       { label: 'ID number', get: (a) => a.id_number },
       { label: 'Gender', get: (a) => a.gender },
       { label: 'Marital status', get: (a) => a.marital_status },
@@ -161,6 +166,7 @@ export function ApplicationsTable({ applications }: { applications: ClmApplicati
                     <div>
                       <p className="font-semibold text-foreground">{a.full_name}</p>
                       <p className="text-sm text-muted-foreground">{waNumber}</p>
+                      {a.course_name && <p className="text-sm font-medium text-primary">{a.course_name}</p>}
                     </div>
                   </div>
                 </td>

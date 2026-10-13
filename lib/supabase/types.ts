@@ -5,6 +5,8 @@ export type UserRole = 'applicant' | 'admin' | 'reviewer' | 'member'
 export type LeadershipLevel = 'Trainee' | 'Deacon' | 'Elder' | 'Leader'
 export type MemberStatus = 'active' | 'inactive' | 'suspended'
 export type NotificationType = 'info' | 'success' | 'warning' | 'error'
+export type StudyMode = 'online' | 'in_person' | 'blended'
+export type CourseStatus = 'draft' | 'active' | 'inactive' | 'archived'
 
 export interface Database {
   public: {
@@ -77,12 +79,16 @@ export interface Database {
           assigned_admin: string | null
           admin_notes: string | null
           applicant_user_id: string | null
+          course_id: string | null
+          course_name: string | null
+          price_snapshot: Json | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           ref?: string
+          course_id?: string | null
           full_name: string
           id_number: string
           gender: 'Male' | 'Female'
@@ -291,6 +297,64 @@ export interface Database {
         }
         Relationships: []
       }
+      clm_courses: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          duration: string | null
+          study_mode: StudyMode
+          status: CourseStatus
+          accepting_applications: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          duration?: string | null
+          study_mode?: StudyMode
+          status?: CourseStatus
+          accepting_applications?: boolean
+          sort_order?: number
+        }
+        Update: {
+          name?: string
+          description?: string | null
+          duration?: string | null
+          study_mode?: StudyMode
+          status?: CourseStatus
+          accepting_applications?: boolean
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      clm_course_prices: {
+        Row: {
+          id: string
+          course_id: string
+          currency: string
+          course_fee: number
+          registration_fee: number
+          effective_from: string
+          note: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          course_id: string
+          currency?: string
+          course_fee: number
+          registration_fee?: number
+          effective_from?: string
+          note?: string | null
+          created_by: string
+        }
+        Update: never
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           id: string
@@ -332,6 +396,10 @@ export interface Database {
         Args: Record<never, never>
         Returns: boolean
       }
+      get_clm_courses: {
+        Args: Record<never, never>
+        Returns: Json
+      }
     }
   }
 }
@@ -346,3 +414,5 @@ export type AuditLog = Database['public']['Tables']['audit_logs']['Row']
 export type WhatsAppTemplate = Database['public']['Tables']['whatsapp_templates']['Row']
 export type WhatsAppLog = Database['public']['Tables']['whatsapp_logs']['Row']
 export type WhatsAppSettings = Database['public']['Tables']['whatsapp_settings']['Row']
+export type ClmCourse = Database['public']['Tables']['clm_courses']['Row']
+export type ClmCoursePrice = Database['public']['Tables']['clm_course_prices']['Row']

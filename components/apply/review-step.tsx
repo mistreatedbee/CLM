@@ -2,6 +2,7 @@
 
 import { Pencil } from 'lucide-react'
 import type { ApplicationForm, StepKey } from './form-model'
+import { formatMoney, type PublicCourse } from '@/lib/courses'
 
 function yn(v: boolean | null) {
   return v === null ? '—' : v ? 'Yes' : 'No'
@@ -48,13 +49,29 @@ function Section({
 
 export function ReviewStep({
   form,
+  courses,
   onEdit,
 }: {
   form: ApplicationForm
+  courses: PublicCourse[]
   onEdit: (s: StepKey) => void
 }) {
+  const course = courses.find((c) => c.id === form.courseId)
   return (
     <div className="flex flex-col gap-5">
+      <Section title="Course" step="course" onEdit={onEdit}>
+        <Row label="Applying for" value={course ? course.name : 'Membership only (no course)'} />
+        {course && (
+          <Row
+            label="Fees"
+            value={
+              course.price
+                ? `${formatMoney(course.price.total, course.price.currency)} (course ${formatMoney(course.price.course_fee, course.price.currency)} + registration ${formatMoney(course.price.registration_fee, course.price.currency)})`
+                : 'To be confirmed'
+            }
+          />
+        )}
+      </Section>
       <Section title="Personal Information" step="personal" onEdit={onEdit}>
         <Row label="Full name" value={form.fullName} />
         <Row label="ID number" value={form.idNumber} />

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   BarChart3,
+  BookOpen,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -20,6 +21,7 @@ const NAV = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/applications', label: 'Applications', icon: FileText },
   { href: '/admin/members', label: 'Members', icon: Users },
+  { href: '/admin/courses', label: 'Courses & fees', icon: BookOpen },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
   { href: '/admin/whatsapp', label: 'WhatsApp', icon: MessageCircle },
 ]

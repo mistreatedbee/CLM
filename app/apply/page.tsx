@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ClmLogo } from '@/components/clm-logo'
 import { ApplicationWizard } from '@/components/apply/application-wizard'
+import { getPublicCourses } from '@/lib/courses-server'
 
 export const metadata: Metadata = {
   title: 'Apply | Christian Leadership Movement',
@@ -9,7 +10,11 @@ export const metadata: Metadata = {
     'Apply to join the Christian Leadership Movement. A simple, guided application you can complete at your own pace.',
 }
 
-export default function ApplyPage() {
+// Courses and fees are managed in the admin panel; always show the latest.
+export const dynamic = 'force-dynamic'
+
+export default async function ApplyPage() {
+  const courses = await getPublicCourses()
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="border-b border-border bg-card">
@@ -27,7 +32,7 @@ export default function ApplyPage() {
       </header>
 
       <main className="flex-1 px-4 py-10 sm:px-6 sm:py-14">
-        <ApplicationWizard />
+        <ApplicationWizard courses={courses} />
       </main>
     </div>
   )

@@ -1,4 +1,6 @@
 export type ApplicationForm = {
+  // Course ('' = membership only, no course)
+  courseId: string
   // Personal
   fullName: string
   idNumber: string
@@ -35,6 +37,7 @@ export type ApplicationForm = {
 }
 
 export const emptyForm: ApplicationForm = {
+  courseId: '',
   fullName: '',
   idNumber: '',
   gender: '',
@@ -68,6 +71,7 @@ export const emptyForm: ApplicationForm = {
 export type Errors = Partial<Record<keyof ApplicationForm, string>>
 
 export const STEP_KEYS = [
+  'course',
   'personal',
   'spiritual',
   'leadership',
@@ -79,6 +83,7 @@ export const STEP_KEYS = [
 export type StepKey = (typeof STEP_KEYS)[number]
 
 export const STEP_META: Record<StepKey, { title: string; short: string }> = {
+  course: { title: 'Choose a course', short: 'Course' },
   personal: { title: 'Personal Information', short: 'About you' },
   spiritual: { title: 'Spiritual Background', short: 'Your faith' },
   leadership: { title: 'Leadership', short: 'Leadership' },
