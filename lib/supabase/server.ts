@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { Database } from './types'
 
@@ -27,25 +28,16 @@ export async function createClient() {
   )
 }
 
+/**
+ * Service-role client. SERVER ONLY — bypasses RLS. Callers must authorise
+ * the user first (see lib/auth.ts getAdmin). It deliberately ignores the
+ * request's session cookies: passing them made supabase-js send the
+ * signed-in user's JWT instead of the service key.
+ */
 export async function createAdminClient() {
-  const cookieStore = await cookies()
-
-  return createServerClient<Database>(
+  return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            )
-          } catch {}
-        },
-      },
-    },
+    { auth: { persistSession: false, autoRefreshToken: false } },
   )
 }

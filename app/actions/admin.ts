@@ -1,10 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { buildWhatsAppUrl, replacePlaceholders } from '@/lib/whatsapp'
 import { statusLabel, formatDate } from '@/lib/clm-data'
 import type { ApplicationStatus } from '@/lib/supabase/types'
+import { getAdmin } from '@/lib/auth'
+
+const STATUSES: ApplicationStatus[] = ['pending', 'under_review', 'approved', 'rejected', 'info_requested']
+const NOT_ALLOWED = { success: false as const, error: 'You do not have permission to do that.' }
 
 export type ActionResult =
   | { success: true; whatsappAction?: { url: string; message: string; templateName: string } }
@@ -16,7 +20,21 @@ export async function updateApplicationStatus(
   applicantName: string,
 ): Promise<ActionResult> {
   try {
-    const adminSupabase = await createAdminClient()
+    // The service-role client bypasses RLS, so authorise explicitly first.
+    if (!(await getAdmin())) return NOT_ALLOWED
+    if (!STATUSES.includes(status)) return { success: false, error: 'Invalid status.' }
+    // Run as the signed-in admin (RLS allows admins to update) so the
+    // audit trigger records who made the decision.
+    const adminSupabase = await createClient()
+
+    const { data: current } = await adminSupabase
+      .from('clm_applications')
+      .select('status')
+      .eq('id', applicationId)
+      .single()
+    if (!current) return { success: false, error: 'Application not found.' }
+    // Saving the same status again must not re-trigger notifications.
+    if (current.status === status) return { success: true }
 
     let updatePayload: { status: ApplicationStatus; email?: string } = { status }
 
@@ -112,10 +130,11 @@ export async function addApplicationNote(
   text: string,
 ): Promise<ActionResult> {
   try {
+    const admin = await getAdmin()
+    if (!admin) return NOT_ALLOWED
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return { success: false, error: 'Not authenticated.' }
+    const user = admin.user
+    if (!text.trim()) return { success: false, error: 'Note is empty.' }
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -147,6 +166,7 @@ export async function updateAdminNotes(
   notes: string,
 ): Promise<ActionResult> {
   try {
+    if (!(await getAdmin())) return NOT_ALLOWED
     const supabase = await createClient()
     const { error } = await supabase
       .from('clm_applications')

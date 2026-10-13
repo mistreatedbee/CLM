@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { AdminShell } from '@/components/admin/admin-shell'
 import { createClient } from '@/lib/supabase/server'
+import { ADMIN_ROLES } from '@/lib/auth'
 
 export const metadata: Metadata = {
   title: 'Admin | Christian Leadership Movement',
@@ -21,7 +22,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .single()
 
   const fullName = profile?.full_name ?? user.email ?? 'Admin'
-  const role = profile?.role ?? 'admin'
+  // Only admins/reviewers may use the dashboard. (Previously a missing
+  // profile defaulted to 'admin'.)
+  if (!profile || !(ADMIN_ROLES as readonly string[]).includes(profile.role)) redirect('/no-access')
+  const role = profile.role
   const initials = fullName
     .split(' ')
     .map((n: string) => n[0])

@@ -3,11 +3,13 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { WhatsAppTemplate, WhatsAppSettings, WhatsAppLog } from '@/lib/supabase/types'
+import { getAdmin } from '@/lib/auth'
 
 export type ActionResult = { success: true } | { success: false; error: string }
 
 export async function getWhatsAppTemplates(): Promise<WhatsAppTemplate[]> {
   try {
+    if (!(await getAdmin())) return []
     const supabase = await createClient()
     const { data } = await supabase
       .from('whatsapp_templates')
@@ -24,6 +26,7 @@ export async function saveWhatsAppTemplate(
   template: Partial<WhatsAppTemplate> & { name: string; trigger_type: string; body: string },
 ): Promise<ActionResult> {
   try {
+    if (!(await getAdmin())) return { success: false, error: 'You do not have permission to do that.' }
     const supabase = await createClient()
 
     if (template.id) {
@@ -58,6 +61,7 @@ export async function saveWhatsAppTemplate(
 
 export async function deleteWhatsAppTemplate(id: string): Promise<ActionResult> {
   try {
+    if (!(await getAdmin())) return { success: false, error: 'You do not have permission to do that.' }
     const supabase = await createClient()
     const { error } = await supabase
       .from('whatsapp_templates')
@@ -74,6 +78,7 @@ export async function deleteWhatsAppTemplate(id: string): Promise<ActionResult> 
 
 export async function getWhatsAppSettings(): Promise<WhatsAppSettings | null> {
   try {
+    if (!(await getAdmin())) return null
     const supabase = await createClient()
     const { data } = await supabase.from('whatsapp_settings').select('*').single()
     return data
@@ -86,6 +91,7 @@ export async function saveWhatsAppSettings(
   settings: Omit<WhatsAppSettings, 'id'>,
 ): Promise<ActionResult> {
   try {
+    if (!(await getAdmin())) return { success: false, error: 'You do not have permission to do that.' }
     const supabase = await createClient()
     const { error } = await supabase.from('whatsapp_settings').update(settings).eq('id', 1)
     if (error) return { success: false, error: 'Failed to save settings.' }
@@ -107,6 +113,7 @@ export async function logWhatsAppMessage(data: {
   sentBy: string
 }): Promise<ActionResult> {
   try {
+    if (!(await getAdmin())) return { success: false, error: 'You do not have permission to do that.' }
     const supabase = await createClient()
     const { error } = await supabase.from('whatsapp_logs').insert({
       application_id: data.applicationId,
@@ -127,6 +134,7 @@ export async function logWhatsAppMessage(data: {
 
 export async function getApplicationWaLogs(applicationId: string): Promise<WhatsAppLog[]> {
   try {
+    if (!(await getAdmin())) return []
     const supabase = await createClient()
     const { data } = await supabase
       .from('whatsapp_logs')
