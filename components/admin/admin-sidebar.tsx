@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   BarChart3,
   BookOpen,
+  Globe,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -22,6 +23,7 @@ const NAV = [
   { href: '/admin/applications', label: 'Applications', icon: FileText },
   { href: '/admin/members', label: 'Members', icon: Users },
   { href: '/admin/courses', label: 'Courses & fees', icon: BookOpen },
+  { href: '/admin/website', label: 'Website content', icon: Globe },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
   { href: '/admin/whatsapp', label: 'WhatsApp', icon: MessageCircle },
 ]

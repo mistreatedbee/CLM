@@ -40,6 +40,7 @@ import {
 import { ReviewStep } from './review-step'
 import { CourseStep } from './course-step'
 import type { PublicCourse } from '@/lib/courses'
+import type { SiteContent } from '@/lib/site-content'
 
 const DRAFT_KEY = 'clm-application-draft'
 
@@ -54,7 +55,13 @@ function hasContent(f: ApplicationForm) {
   })
 }
 
-export function ApplicationWizard({ courses }: { courses: PublicCourse[] }) {
+export function ApplicationWizard({
+  courses,
+  confirmation,
+}: {
+  courses: PublicCourse[]
+  confirmation: SiteContent['apply']
+}) {
   const openCourses = courses.filter((c) => c.open_for_applications)
   const [phase, setPhase] = useState<Phase>('welcome')
   const [stepIndex, setStepIndex] = useState(0)
@@ -183,6 +190,7 @@ export function ApplicationWizard({ courses }: { courses: PublicCourse[] }) {
   if (phase === 'submitted') {
     return (
       <SubmittedScreen
+        confirmation={confirmation}
         appNumber={appNumber}
         copied={copied}
         onCopy={() => {
@@ -432,10 +440,12 @@ function InfoRow({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 function SubmittedScreen({
+  confirmation,
   appNumber,
   copied,
   onCopy,
 }: {
+  confirmation: SiteContent['apply']
   appNumber: string
   copied: boolean
   onCopy: () => void
@@ -451,8 +461,7 @@ function SubmittedScreen({
         Your application is in!
       </h1>
       <p className="mx-auto mt-4 max-w-lg text-lg leading-relaxed text-muted-foreground">
-        Thank you for applying to the Christian Leadership Movement. We have received your
-        application and sent a confirmation to your email.
+        {confirmation.submitted_message}
       </p>
 
       <div className="mx-auto mt-8 max-w-md rounded-2xl border border-border bg-card p-6">
@@ -472,11 +481,7 @@ function SubmittedScreen({
       <div className="mx-auto mt-8 max-w-md rounded-2xl bg-secondary/60 p-6 text-left">
         <h2 className="font-heading text-lg font-bold text-foreground">What happens next?</h2>
         <ol className="mt-3 space-y-3">
-          {[
-            'Our team reviews your application within 5 working days.',
-            'We may contact your reference to confirm your details.',
-            'You will receive an email with the outcome and next steps.',
-          ].map((t, i) => (
+          {confirmation.next_steps.map((t, i) => (
             <li key={i} className="flex gap-3 text-base text-foreground">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                 {i + 1}

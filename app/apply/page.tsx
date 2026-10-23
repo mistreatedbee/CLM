@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { ClmLogo } from '@/components/clm-logo'
 import { ApplicationWizard } from '@/components/apply/application-wizard'
 import { getPublicCourses } from '@/lib/courses-server'
+import { getSiteContent } from '@/lib/site-content-server'
+import { telHref } from '@/lib/site-content'
 
 export const metadata: Metadata = {
   title: 'Apply | Christian Leadership Movement',
@@ -14,7 +16,8 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function ApplyPage() {
-  const courses = await getPublicCourses()
+  const [courses, content] = await Promise.all([getPublicCourses(), getSiteContent()])
+  const helpPhone = content.apply.help_phone.trim()
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="border-b border-border bg-card">
@@ -22,17 +25,19 @@ export default async function ApplyPage() {
           <Link href="/" aria-label="Christian Leadership Movement home">
             <ClmLogo size="md" />
           </Link>
-          <a
-            href="tel:+27732047642"
-            className="text-base font-medium text-muted-foreground hover:text-foreground"
-          >
-            Need help? Call 073 204 7642
-          </a>
+          {helpPhone && (
+            <a
+              href={telHref(helpPhone)}
+              className="text-base font-medium text-muted-foreground hover:text-foreground"
+            >
+              Need help? Call {helpPhone}
+            </a>
+          )}
         </div>
       </header>
 
       <main className="flex-1 px-4 py-10 sm:px-6 sm:py-14">
-        <ApplicationWizard courses={courses} />
+        <ApplicationWizard courses={courses} confirmation={content.apply} />
       </main>
     </div>
   )

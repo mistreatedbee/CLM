@@ -164,12 +164,14 @@ export interface Database {
           leadership_level: LeadershipLevel
           status: MemberStatus
           joined_date: string
+          notes: string | null
+          id_number: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          member_number: string
+          member_number?: string
           application_id?: string | null
           full_name: string
           phone: string
@@ -178,10 +180,19 @@ export interface Database {
           leadership_level?: LeadershipLevel
           status?: MemberStatus
           joined_date?: string
+          notes?: string | null
+          id_number?: string | null
         }
         Update: {
+          full_name?: string
+          phone?: string
+          email?: string | null
+          church?: string
           leadership_level?: LeadershipLevel
           status?: MemberStatus
+          joined_date?: string
+          notes?: string | null
+          id_number?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -353,6 +364,12 @@ export interface Database {
           created_by: string
         }
         Update: never
+        Relationships: []
+      }
+      clm_site_content: {
+        Row: { id: string; content: Json; updated_at: string; updated_by: string | null }
+        Insert: { id?: string; content?: Json; updated_by?: string | null }
+        Update: { content?: Json; updated_by?: string | null }
         Relationships: []
       }
       audit_logs: {

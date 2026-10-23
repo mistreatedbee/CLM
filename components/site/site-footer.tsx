@@ -1,16 +1,16 @@
 import Link from 'next/link'
 import { Globe, Lock, Mail, MapPin, Phone } from 'lucide-react'
 import { ClmLogo } from '@/components/clm-logo'
+import { displayUrl, telHref, type SiteContent } from '@/lib/site-content'
 
-export function SiteFooter() {
+export function SiteFooter({ contact }: { contact: SiteContent['contact'] }) {
   return (
     <footer className="border-t border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-1">
           <ClmLogo invert />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-sidebar-foreground/70">
-            Transforming Leaders, Transforming the Nations. Raising servant leaders to impact every
-            community for Christ.
+            {contact.footer_blurb}
           </p>
         </div>
 
@@ -47,36 +47,33 @@ export function SiteFooter() {
             Contact us
           </h3>
           <ul className="mt-4 space-y-3 text-sm">
-            <li>
-              <a
-                href="tel:+27732047642"
-                className="flex items-center gap-3 text-sidebar-foreground/80 hover:text-white"
-              >
-                <Phone className="size-4 shrink-0 text-sidebar-primary" /> 073 204 7642
-              </a>
-            </li>
-            <li>
-              <a
-                href="mailto:kenstraining04@gmail.com"
-                className="flex items-center gap-3 text-sidebar-foreground/80 hover:text-white"
-              >
-                <Mail className="size-4 shrink-0 text-sidebar-primary" /> kenstraining04@gmail.com
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://www.christianleadershipmovement.co.za"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-sidebar-foreground/80 hover:text-white"
-              >
-                <Globe className="size-4 shrink-0 text-sidebar-primary" /> christianleadershipmovement.co.za
-              </a>
-            </li>
-            <li className="flex items-start gap-3 text-sidebar-foreground/80">
-              <MapPin className="mt-0.5 size-4 shrink-0 text-sidebar-primary" />
-              House No. 1717, Dwarsloop Phase 2, South Africa
-            </li>
+            {contact.phone && (
+              <li>
+                <a href={telHref(contact.phone)} className="flex items-center gap-3 text-sidebar-foreground/80 hover:text-white">
+                  <Phone className="size-4 shrink-0 text-sidebar-primary" /> {contact.phone}
+                </a>
+              </li>
+            )}
+            {contact.email && (
+              <li>
+                <a href={`mailto:${contact.email}`} className="flex items-center gap-3 break-all text-sidebar-foreground/80 hover:text-white">
+                  <Mail className="size-4 shrink-0 text-sidebar-primary" /> {contact.email}
+                </a>
+              </li>
+            )}
+            {contact.website && (
+              <li>
+                <a href={contact.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sidebar-foreground/80 hover:text-white">
+                  <Globe className="size-4 shrink-0 text-sidebar-primary" /> {displayUrl(contact.website)}
+                </a>
+              </li>
+            )}
+            {contact.address && (
+              <li className="flex items-start gap-3 text-sidebar-foreground/80">
+                <MapPin className="mt-0.5 size-4 shrink-0 text-sidebar-primary" />
+                <span className="whitespace-pre-line">{contact.address}</span>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -85,9 +82,7 @@ export function SiteFooter() {
             Office hours
           </h3>
           <ul className="mt-4 space-y-3 text-sm text-sidebar-foreground/80">
-            <li>Mon – Fri: 08:00 – 17:00</li>
-            <li>Sat: 09:00 – 13:00</li>
-            <li>Sun: Closed</li>
+            {contact.office_hours.map((line, i) => <li key={i}>{line}</li>)}
           </ul>
         </div>
       </div>
