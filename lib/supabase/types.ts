@@ -82,6 +82,7 @@ export interface Database {
           course_id: string | null
           course_name: string | null
           price_snapshot: Json | null
+          custom_answers?: Json
           created_at: string
           updated_at: string
         }
@@ -366,6 +367,12 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      clm_form_config: {
+        Row: { id: string; draft: Json | null; published: Json | null; published_at: string | null; published_by: string | null; updated_at: string; updated_by: string | null }
+        Insert: { id?: string; draft?: Json | null; published?: Json | null }
+        Update: { draft?: Json | null; published?: Json | null; published_at?: string | null; published_by?: string | null; updated_by?: string | null }
+        Relationships: []
+      }
       clm_site_content: {
         Row: { id: string; content: Json; updated_at: string; updated_by: string | null }
         Insert: { id?: string; content?: Json; updated_by?: string | null }
@@ -412,6 +419,10 @@ export interface Database {
       is_admin: {
         Args: Record<never, never>
         Returns: boolean
+      }
+      get_clm_form: {
+        Args: Record<never, never>
+        Returns: Json
       }
       get_clm_courses: {
         Args: Record<never, never>

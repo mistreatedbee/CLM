@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import { extractFromNotes, formatDate } from '@/lib/clm-data'
 import type { ApplicationStatus } from '@/lib/clm-data'
 import { formatMoney, type PriceQuote } from '@/lib/courses'
+import { getPublishedForm } from '@/lib/form-config-server'
+import { fieldLabels } from '@/lib/form-config'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -67,6 +69,11 @@ export default async function ApplicationDetailPage({
   ])
 
   if (!app) notFound()
+
+  // Answers to questions added in Admin > Application form.
+  const labels = fieldLabels(await getPublishedForm())
+  const customAnswers = Object.entries(((app as { custom_answers?: Record<string, unknown> }).custom_answers ?? {}) as Record<string, unknown>)
+    .filter(([, v]) => v !== null && v !== '' && v !== undefined)
 
   // WhatsApp data — gracefully handle missing tables (migration not yet run)
   const [waLogsResult, waTemplatesResult, waSettingsResult] = await Promise.allSettled([
@@ -130,6 +137,18 @@ export default async function ApplicationDetailPage({
                 )
               })()}
             </Section>
+
+            {customAnswers.length > 0 && (
+              <Section title="Additional questions">
+                {customAnswers.map(([key, value]) => (
+                  <Field
+                    key={key}
+                    label={labels[key] ?? key.replace(/^custom_/, '').replace(/_/g, ' ')}
+                    value={typeof value === 'boolean' ? value : String(value)}
+                  />
+                ))}
+              </Section>
+            )}
 
             <Section title="Personal information">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -4,6 +4,7 @@ import { ClmLogo } from '@/components/clm-logo'
 import { ApplicationWizard } from '@/components/apply/application-wizard'
 import { getPublicCourses } from '@/lib/courses-server'
 import { getSiteContent } from '@/lib/site-content-server'
+import { getPublishedForm } from '@/lib/form-config-server'
 import { telHref } from '@/lib/site-content'
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function ApplyPage() {
-  const [courses, content] = await Promise.all([getPublicCourses(), getSiteContent()])
+  const [courses, content, form] = await Promise.all([getPublicCourses(), getSiteContent(), getPublishedForm()])
   const helpPhone = content.apply.help_phone.trim()
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -37,7 +38,7 @@ export default async function ApplyPage() {
       </header>
 
       <main className="flex-1 px-4 py-10 sm:px-6 sm:py-14">
-        <ApplicationWizard courses={courses} confirmation={content.apply} />
+        <ApplicationWizard courses={courses} confirmation={content.apply} form={form} />
       </main>
     </div>
   )

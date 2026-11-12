@@ -41,18 +41,18 @@ function Option({
 
 export function CourseStep({
   courses,
+  intro,
   value,
   onChange,
 }: {
   courses: PublicCourse[]
+  intro: string
   value: string
   onChange: (courseId: string) => void
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-lg leading-relaxed text-muted-foreground">
-        You can apply for one of our courses, or apply for membership of the movement only.
-      </p>
+      {intro && <p className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">{intro}</p>}
 
       <div role="radiogroup" aria-label="Course" className="flex flex-col gap-3">
         {courses.map((c) => (

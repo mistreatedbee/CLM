@@ -1,55 +1,41 @@
 'use server'
 
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import type { ApplicationForm } from '@/components/apply/form-model'
+import { getPublishedForm } from '@/lib/form-config-server'
+import { answersToRow, applicationsOpen, validateAll, type Answers, type Errors } from '@/lib/form-config'
 
 export type SubmitResult =
   | { success: true; ref: string }
-  | { success: false; error: string }
+  | { success: false; error: string; fieldErrors?: Errors }
 
-export async function submitApplication(form: ApplicationForm): Promise<SubmitResult> {
+export async function submitApplication(input: { courseId: string; answers: Answers }): Promise<SubmitResult> {
   try {
+    const form = await getPublishedForm()
+    if (!applicationsOpen(form)) return { success: false, error: form.settings.closed_message }
+
+    // Validate on the server against the published form, not just in the browser.
+    const answers: Answers = input?.answers && typeof input.answers === 'object' ? input.answers : {}
+    const fieldErrors = validateAll(form, answers)
+    if (Object.keys(fieldErrors).length > 0) {
+      return { success: false, error: 'Some answers need attention before you can submit.', fieldErrors }
+    }
+
+    const { row, custom } = answersToRow(form, answers)
     const [supabase, adminSupabase] = await Promise.all([createClient(), createAdminClient()])
     const { data: { user } } = await supabase.auth.getUser()
 
     const { data, error } = await adminSupabase
       .from('clm_applications')
+      // Columns are built from the form configuration; see lib/form-config.ts.
       .insert({
-        full_name: form.fullName,
-        id_number: form.idNumber,
-        gender: form.gender as 'Male' | 'Female',
-        marital_status: form.maritalStatus,
-        whatsapp: form.whatsapp,
-        phone: form.phone,
+        ...(row as Record<string, string | boolean | null>),
         email: null,
-        physical_address: form.address,
-        country: form.country,
-        accepted_christ_date: form.acceptedDate,
-        baptized: form.baptized!,
-        attends_church: form.attendsChurch!,
-        church_name: form.churchName,
-        church_denomination: form.denomination,
-        pastor_name: form.pastorName,
-        serves_ministry: form.servesMinistry!,
-        ministry_detail: form.ministryDetail || null,
-        reason_joining: form.whyJoin,
-        leadership_experience: form.leadershipExperience,
-        spiritual_gifts: form.spiritualGifts,
-        growth_areas: form.growthAreas,
-        called_to_leadership: form.calledToLead!,
-        leadership_vision_explanation: form.callingExplanation,
-        long_term_vision: form.longTermVision,
-        reference_name: form.referenceName,
-        reference_phone: form.referencePhone,
-        reference_relationship: form.referenceRelationship,
-        signature: form.signature,
-        signature_date: form.signatureDate,
         applicant_user_id: user?.id ?? null,
-        // Only sent when chosen, so membership applications also work before
-        // the courses migration has been run. The database sets the course
-        // name and fees itself and rejects closed courses.
-        ...(/^[0-9a-f-]{36}$/.test(form.courseId ?? '') ? { course_id: form.courseId } : {}),
-      })
+        // Only sent when present, so the form also works before the
+        // matching migrations have been run.
+        ...(Object.keys(custom).length > 0 ? { custom_answers: custom } : {}),
+        ...(/^[0-9a-f-]{36}$/.test(input?.courseId ?? '') ? { course_id: input.courseId } : {}),
+      } as never)
       .select('ref')
       .single()
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   AlertCircle,
@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clock,
   Copy,
+  Eye,
   Home,
   Loader2,
   RotateCcw,
@@ -22,21 +23,15 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { submitApplication } from '@/app/actions/application'
 import {
-  emptyForm,
-  STEP_KEYS,
-  STEP_META,
+  applicationsOpen,
+  enabledSteps,
+  isFieldVisible,
   validateStep,
-  type ApplicationForm,
+  type Answers,
   type Errors,
-  type StepKey,
-} from './form-model'
-import {
-  LeadershipStep,
-  PersonalStep,
-  ReferencesStep,
-  SpiritualStep,
-  VisionStep,
-} from './steps'
+  type FormConfig,
+} from '@/lib/form-config'
+import { FieldRenderer } from './field-renderer'
 import { ReviewStep } from './review-step'
 import { CourseStep } from './course-step'
 import type { PublicCourse } from '@/lib/courses'
@@ -47,9 +42,11 @@ const DRAFT_KEY = 'clm-application-draft'
 type Phase = 'welcome' | 'form' | 'submitted'
 type SaveState = 'idle' | 'saving' | 'saved'
 
-function hasContent(f: ApplicationForm) {
-  return Object.entries(f).some(([k, v]) => {
-    if (k === 'country' || k === 'courseId') return false
+const DEFAULT_ANSWERS: Answers = { country: 'South Africa' }
+
+function hasContent(a: Answers) {
+  return Object.entries(a).some(([k, v]) => {
+    if (k === 'country') return false
     if (typeof v === 'boolean') return true
     return typeof v === 'string' && v.trim().length > 0
   })
@@ -58,14 +55,24 @@ function hasContent(f: ApplicationForm) {
 export function ApplicationWizard({
   courses,
   confirmation,
+  form: config,
+  preview = false,
 }: {
   courses: PublicCourse[]
   confirmation: SiteContent['apply']
+  form: FormConfig
+  /** Admin preview: nothing is saved or submitted. */
+  preview?: boolean
 }) {
   const openCourses = courses.filter((c) => c.open_for_applications)
+  const steps = useMemo(() => enabledSteps(config), [config])
+  const stepKeys = useMemo(() => ['course', ...steps.map((s) => s.key), 'review'], [steps])
+  const shortLabels = useMemo(() => ['Course', ...steps.map((s) => s.short), 'Review'], [steps])
+
   const [phase, setPhase] = useState<Phase>('welcome')
   const [stepIndex, setStepIndex] = useState(0)
-  const [form, setForm] = useState<ApplicationForm>(emptyForm)
+  const [answers, setAnswers] = useState<Answers>(DEFAULT_ANSWERS)
+  const [courseId, setCourseId] = useState('')
   const [errors, setErrors] = useState<Errors>({})
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [draftFound, setDraftFound] = useState(false)
@@ -76,66 +83,70 @@ export function ApplicationWizard({
   const topRef = useRef<HTMLDivElement>(null)
   const hydrated = useRef(false)
 
-  // Load draft on mount
+  // Load draft on mount. Drafts saved by the previous form used the same
+  // question keys, with the course id alongside them.
   useEffect(() => {
+    if (preview) return
     try {
       const raw = localStorage.getItem(DRAFT_KEY)
       if (raw) {
         const parsed = JSON.parse(raw)
-        if (parsed?.form && hasContent(parsed.form)) {
-          const saved = { ...emptyForm, ...parsed.form }
-          // A course chosen earlier may since have closed.
-          if (saved.courseId && !openCourses.some((c) => c.id === saved.courseId)) saved.courseId = ''
-          setForm(saved)
-          setDraftFound(true)
+        if (parsed?.form && typeof parsed.form === 'object') {
+          const { courseId: savedCourse, ...rest } = parsed.form as Answers & { courseId?: string }
+          if (hasContent(rest)) {
+            setAnswers({ ...DEFAULT_ANSWERS, ...rest })
+            // A course chosen earlier may since have closed.
+            setCourseId(typeof savedCourse === 'string' && openCourses.some((c) => c.id === savedCourse) ? savedCourse : '')
+            setDraftFound(true)
+          }
         }
       }
     } catch {
       /* ignore */
     }
     hydrated.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Autosave (debounced)
   useEffect(() => {
-    if (!hydrated.current || phase === 'submitted') return
-    if (!hasContent(form)) return
+    if (preview || !hydrated.current || phase === 'submitted') return
+    if (!hasContent(answers)) return
     setSaveState('saving')
     const t = setTimeout(() => {
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, stepIndex, at: Date.now() }))
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form: { ...answers, courseId }, stepIndex, at: Date.now() }))
         setSaveState('saved')
       } catch {
         setSaveState('idle')
       }
     }, 600)
     return () => clearTimeout(t)
-  }, [form, stepIndex, phase])
+  }, [answers, courseId, stepIndex, phase, preview])
 
-  const set = useCallback(
-    <K extends keyof ApplicationForm>(key: K, value: ApplicationForm[K]) => {
-      setForm((f) => ({ ...f, [key]: value }))
-      setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e))
-    },
-    [],
-  )
+  const setAnswer = useCallback((key: string, value: string | boolean | null) => {
+    setAnswers((a) => ({ ...a, [key]: value }))
+    setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e))
+  }, [])
 
   const scrollTop = () => {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const stepKey = STEP_KEYS[stepIndex]
+  const stepKey = stepKeys[stepIndex]
+  const currentStep = steps.find((s) => s.key === stepKey)
+  const title = stepKey === 'course' ? config.course_step.title : stepKey === 'review' ? 'Review & Submit' : currentStep?.title ?? ''
 
   const goNext = () => {
-    if (stepKey !== 'review') {
-      const errs = validateStep(stepKey, form)
+    if (currentStep) {
+      const errs = validateStep(currentStep, answers)
       if (Object.keys(errs).length > 0) {
         setErrors(errs)
         scrollTop()
         return
       }
     }
-    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
+    setStepIndex((i) => Math.min(i + 1, stepKeys.length - 1))
     setErrors({})
     scrollTop()
   }
@@ -146,27 +157,35 @@ export function ApplicationWizard({
     scrollTop()
   }
 
-  const editStep = (s: StepKey) => {
-    setStepIndex(STEP_KEYS.indexOf(s))
+  const editStep = (key: string) => {
+    const i = stepKeys.indexOf(key)
+    if (i >= 0) setStepIndex(i)
     scrollTop()
   }
 
   const startFresh = () => {
-    setForm(emptyForm)
+    setAnswers(DEFAULT_ANSWERS)
+    setCourseId('')
     setDraftFound(false)
-    localStorage.removeItem(DRAFT_KEY)
+    if (!preview) localStorage.removeItem(DRAFT_KEY)
     setStepIndex(0)
     setPhase('form')
   }
 
   const submit = async () => {
+    if (preview) { setSubmitError('This is a preview — submissions are disabled.'); return }
     setSubmitting(true)
     setSubmitError(null)
-    const result = await submitApplication(form)
+    const result = await submitApplication({ courseId, answers })
     setSubmitting(false)
 
     if (!result.success) {
       setSubmitError(result.error)
+      if (result.fieldErrors && Object.keys(result.fieldErrors).length > 0) {
+        setErrors(result.fieldErrors)
+        const firstBad = steps.findIndex((s) => s.fields.some((f) => result.fieldErrors![f.key]))
+        if (firstBad >= 0) { setStepIndex(firstBad + 1); scrollTop() }
+      }
       return
     }
 
@@ -176,14 +195,40 @@ export function ApplicationWizard({
     window.scrollTo({ top: 0 })
   }
 
+  const previewBanner = preview && (
+    <div className="mx-auto mb-6 flex max-w-2xl items-center gap-2 rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-base font-medium text-foreground">
+      <Eye className="size-5 shrink-0" /> Preview — nothing is saved or submitted.
+    </div>
+  )
+
+  if (!preview && !applicationsOpen(config)) {
+    return (
+      <div className="mx-auto max-w-2xl text-center">
+        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-muted">
+          <Clock className="size-10 text-muted-foreground" />
+        </div>
+        <h1 className="mt-6 font-heading text-3xl font-extrabold text-foreground">Applications are closed</h1>
+        <p className="mx-auto mt-4 max-w-lg whitespace-pre-line text-lg text-muted-foreground">{config.settings.closed_message}</p>
+        <Link href="/" className="mt-8 inline-block">
+          <Button variant="outline" className="h-14 gap-2 px-8 text-lg"><Home className="size-5" /> Back to home</Button>
+        </Link>
+      </div>
+    )
+  }
+
   if (phase === 'welcome') {
     return (
-      <WelcomeScreen
-        draftFound={draftFound}
-        onStart={() => (draftFound ? setPhase('form') : startFresh())}
-        onResume={() => setPhase('form')}
-        onFresh={startFresh}
-      />
+      <>
+        {previewBanner}
+        <WelcomeScreen
+          title={config.welcome.title}
+          intro={config.welcome.intro}
+          draftFound={draftFound}
+          onStart={() => (draftFound ? setPhase('form') : startFresh())}
+          onResume={() => setPhase('form')}
+          onFresh={startFresh}
+        />
+      </>
     )
   }
 
@@ -204,30 +249,37 @@ export function ApplicationWizard({
 
   return (
     <div ref={topRef} className="mx-auto max-w-2xl scroll-mt-6">
-      <ProgressIndicator stepIndex={stepIndex} onJump={editStep} />
+      {previewBanner}
+      <ProgressIndicator labels={shortLabels} stepIndex={stepIndex} onJump={(i) => editStep(stepKeys[i])} />
 
       <div className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-base font-semibold text-[color:var(--gold)]">
-              Step {stepIndex + 1} of {STEP_KEYS.length}
+              Step {stepIndex + 1} of {stepKeys.length}
             </p>
             <h1 className="mt-1 font-heading text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
-              {STEP_META[stepKey].title}
+              {title}
             </h1>
           </div>
-          <SaveBadge state={saveState} />
+          {!preview && <SaveBadge state={saveState} />}
         </div>
 
         {stepKey === 'course' && (
-          <CourseStep courses={openCourses} value={form.courseId} onChange={(id) => set('courseId', id)} />
+          <CourseStep courses={openCourses} intro={config.course_step.intro} value={courseId} onChange={setCourseId} />
         )}
-        {stepKey === 'personal' && <PersonalStep form={form} set={set} errors={errors} />}
-        {stepKey === 'spiritual' && <SpiritualStep form={form} set={set} errors={errors} />}
-        {stepKey === 'leadership' && <LeadershipStep form={form} set={set} errors={errors} />}
-        {stepKey === 'vision' && <VisionStep form={form} set={set} errors={errors} />}
-        {stepKey === 'references' && <ReferencesStep form={form} set={set} errors={errors} />}
-        {stepKey === 'review' && <ReviewStep form={form} courses={openCourses} onEdit={editStep} />}
+        {currentStep && (
+          <div className="flex flex-col gap-7">
+            {currentStep.intro && <p className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">{currentStep.intro}</p>}
+            {currentStep.fields.filter((f) => isFieldVisible(f, answers)).map((field) => (
+              <FieldRenderer key={field.key} field={field} value={answers[field.key] ?? null}
+                onChange={(v) => setAnswer(field.key, v)} error={errors[field.key]} />
+            ))}
+          </div>
+        )}
+        {stepKey === 'review' && (
+          <ReviewStep steps={steps} answers={answers} courseId={courseId} courses={openCourses} onEdit={editStep} />
+        )}
 
         {stepKey === 'review' && (
           <>
@@ -238,7 +290,7 @@ export function ApplicationWizard({
               </p>
             </div>
             {submitError && (
-              <div className="mt-4 flex items-start gap-3 rounded-2xl bg-destructive/10 p-4 text-destructive">
+              <div role="alert" className="mt-4 flex items-start gap-3 rounded-2xl bg-destructive/10 p-4 text-destructive">
                 <AlertCircle className="mt-0.5 size-5 shrink-0" />
                 <p className="text-base font-medium">{submitError}</p>
               </div>
@@ -256,8 +308,9 @@ export function ApplicationWizard({
           >
             <ArrowLeft className="size-5" /> Back
           </Button>
-        ) : (
+        ) : preview ? <span /> : (
           <Link href="/">
+
             <Button variant="ghost" className="h-14 gap-2 px-4 text-lg">
               <Home className="size-5" /> Exit
             </Button>
@@ -287,7 +340,7 @@ export function ApplicationWizard({
         )}
       </div>
 
-      <p className="mt-5 flex items-center justify-center gap-2 text-center text-base text-muted-foreground">
+      <p className={cn('mt-5 flex items-center justify-center gap-2 text-center text-base text-muted-foreground', preview && 'hidden')}>
         <Save className="size-4" /> Your progress is saved automatically. You can safely close this
         page and come back later.
       </p>
@@ -316,13 +369,15 @@ function SaveBadge({ state }: { state: SaveState }) {
 }
 
 function ProgressIndicator({
+  labels,
   stepIndex,
   onJump,
 }: {
+  labels: string[]
   stepIndex: number
-  onJump: (s: StepKey) => void
+  onJump: (i: number) => void
 }) {
-  const pct = ((stepIndex + 1) / STEP_KEYS.length) * 100
+  const pct = ((stepIndex + 1) / labels.length) * 100
   return (
     <div>
       <div className="mb-4 h-2.5 w-full overflow-hidden rounded-full bg-muted">
@@ -332,16 +387,17 @@ function ProgressIndicator({
         />
       </div>
       <ol className="flex items-center justify-between gap-1">
-        {STEP_KEYS.map((k, i) => {
+        {labels.map((label, i) => {
           const done = i < stepIndex
           const active = i === stepIndex
           return (
-            <li key={k} className="flex flex-1 flex-col items-center gap-1.5">
+            <li key={i} className="flex flex-1 flex-col items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => (done ? onJump(k) : undefined)}
+                onClick={() => (done ? onJump(i) : undefined)}
                 disabled={!done}
                 aria-current={active ? 'step' : undefined}
+                aria-label={`Step ${i + 1}: ${label}`}
                 className={cn(
                   'grid size-9 place-items-center rounded-full border-2 text-sm font-bold transition',
                   active && 'border-primary bg-primary text-primary-foreground',
@@ -357,7 +413,7 @@ function ProgressIndicator({
                   active ? 'text-foreground' : 'text-muted-foreground',
                 )}
               >
-                {STEP_META[k].short}
+                {label}
               </span>
             </li>
           )
@@ -368,11 +424,15 @@ function ProgressIndicator({
 }
 
 function WelcomeScreen({
+  title,
+  intro,
   draftFound,
   onStart,
   onResume,
   onFresh,
 }: {
+  title: string
+  intro: string
   draftFound: boolean
   onStart: () => void
   onResume: () => void
@@ -386,11 +446,10 @@ function WelcomeScreen({
         className="mx-auto w-full max-w-sm rounded-3xl border border-border bg-card shadow-sm"
       />
       <h1 className="mt-8 font-heading text-3xl font-extrabold tracking-tight text-balance text-foreground sm:text-4xl">
-        Welcome! Let’s begin your application
+        {title}
       </h1>
       <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
-        We will ask a few simple questions about you and your faith. Take your time, there is no
-        rush.
+        {intro}
       </p>
 
       <div className="mx-auto mt-8 flex max-w-md flex-col gap-3">
