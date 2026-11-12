@@ -1,7 +1,7 @@
 'use client'
 
 import { Pencil } from 'lucide-react'
-import { isFieldVisible, type Answers, type StepConfig } from '@/lib/form-config'
+import { isFieldVisible, type Answers, type FormConfig, type StepConfig, type UploadedDoc } from '@/lib/form-config'
 import { formatMoney, type PublicCourse } from '@/lib/courses'
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -45,7 +45,13 @@ export function ReviewStep({
   courseId,
   courses,
   onEdit,
+  config,
+  docs = [],
+  declaration = null,
 }: {
+  config?: FormConfig
+  docs?: UploadedDoc[]
+  declaration?: boolean | null
   steps: StepConfig[]
   answers: Answers
   courseId: string
@@ -75,6 +81,14 @@ export function ReviewStep({
           ))}
         </Section>
       ))}
+      {config && (config.documents.some((d) => d.enabled) || config.declaration.enabled) && (
+        <Section title="Documents" onEdit={() => onEdit('documents')}>
+          {config.documents.filter((d) => d.enabled).map((d) => (
+            <Row key={d.type} label={d.label} value={docs.find((x) => x.type === d.type)?.name ?? 'Not uploaded'} />
+          ))}
+          {config.declaration.enabled && <Row label="Declaration" value={declaration ? 'Accepted' : 'Not accepted'} />}
+        </Section>
+      )}
     </div>
   )
 }

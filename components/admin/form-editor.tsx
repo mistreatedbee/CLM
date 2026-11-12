@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { discardFormDraft, publishForm, saveFormDraft } from '@/app/actions/form'
 import {
   CORE_FIELDS, FIELD_TYPES, REQUIRED_STEPS, makeCustomKey,
-  type FieldConfig, type FieldType, type FormConfig, type StepConfig,
+  type DocumentConfig, type FieldConfig, type FieldType, type FormConfig, type StepConfig,
 } from '@/lib/form-config'
 
 const input =
@@ -149,6 +149,28 @@ export function FormEditor({ initial, hasDraft, canEdit }: { initial: FormConfig
           <StepEditor key={step.key} step={step} allKeys={config.steps.flatMap((x) => x.fields.map((f) => f.key))}
             onChange={(fn) => update((c) => { fn(c.steps[si]) })} />
         ))}
+
+        <DocumentsEditor
+          docs={config.documents}
+          intro={config.documents_intro}
+          onIntro={(v) => update((c) => { c.documents_intro = v })}
+          onChange={(docs) => update((c) => { c.documents = docs })}
+        />
+
+        <Card className="p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-heading text-lg font-bold">Declaration</h2>
+            <Check checked={config.declaration.enabled} onChange={(v) => update((c) => { c.declaration.enabled = v })}>Ask applicants to accept a declaration</Check>
+          </div>
+          <div className={cn('grid gap-4', !config.declaration.enabled && 'opacity-60')}>
+            <Field label="Declaration text" htmlFor="d-text">
+              <textarea id="d-text" rows={4} className={area} value={config.declaration.text} onChange={(e) => update((c) => { c.declaration.text = e.target.value })} />
+            </Field>
+            <Field label="Acceptance question" htmlFor="d-acc">
+              <input id="d-acc" className={input} value={config.declaration.accept_label} onChange={(e) => update((c) => { c.declaration.accept_label = e.target.value })} />
+            </Field>
+          </div>
+        </Card>
       </fieldset>
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 px-4 py-3 backdrop-blur lg:left-72">
@@ -293,5 +315,66 @@ function QuestionEditor({ field, first, last, onMove, onChange, onRemove }: {
         </div>
       </div>
     </li>
+  )
+}
+
+function DocumentsEditor({ docs, intro, onIntro, onChange }: {
+  docs: DocumentConfig[]
+  intro: string
+  onIntro: (v: string) => void
+  onChange: (docs: DocumentConfig[]) => void
+}) {
+  const [label, setLabel] = useState('')
+  const set = (i: number, patch: Partial<DocumentConfig>) => onChange(docs.map((d, j) => (j === i ? { ...d, ...patch } : d)))
+  return (
+    <Card className="p-6">
+      <h2 className="mb-1 font-heading text-lg font-bold">Documents to upload</h2>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Ask applicants for files such as an ID copy or certificates. With none added, the form has no upload step.
+      </p>
+      <div className="space-y-4">
+        <Field label="Instructions" htmlFor="doc-intro">
+          <input id="doc-intro" className={input} value={intro} onChange={(e) => onIntro(e.target.value)} />
+        </Field>
+        <ul className="space-y-3">
+          {docs.map((d, i) => (
+            <li key={d.type} className="flex flex-wrap items-start gap-3 rounded-xl border border-border p-3">
+              <div className="grid min-w-0 flex-1 gap-3 md:grid-cols-2">
+                <Field label="Document" htmlFor={`doc-l-${d.type}`}>
+                  <input id={`doc-l-${d.type}`} className={input} value={d.label} onChange={(e) => set(i, { label: e.target.value })} />
+                </Field>
+                <Field label="Hint" htmlFor={`doc-h-${d.type}`}>
+                  <input id={`doc-h-${d.type}`} className={input} value={d.hint} onChange={(e) => set(i, { hint: e.target.value })} />
+                </Field>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Check checked={d.enabled} onChange={(v) => set(i, { enabled: v })}>Shown</Check>
+                <Check checked={d.required} onChange={(v) => set(i, { required: v })}>Required</Check>
+                <button type="button" onClick={() => onChange(docs.filter((_, j) => j !== i))} className="flex items-center gap-1 rounded px-1 text-sm text-muted-foreground hover:text-destructive">
+                  <Trash2 className="size-3.5" /> Remove
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="flex flex-wrap items-end gap-2">
+          <Field label="Add a document" htmlFor="doc-new" className="min-w-[220px] flex-1">
+            <input id="doc-new" className={input} value={label} placeholder="e.g. Copy of ID" onChange={(e) => setLabel(e.target.value)} />
+          </Field>
+          <Button type="button" variant="outline" className="h-11 gap-1.5" disabled={!label.trim()}
+            onClick={() => {
+              const base = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 30) || 'document'
+              let type = base
+              let n = 2
+              while (docs.some((d) => d.type === type) || type.length < 2) type = `${base}_${n++}`
+              onChange([...docs, { type, label: label.trim(), hint: '', required: true, enabled: true }])
+              setLabel('')
+            }}>
+            <Plus className="size-4" /> Add
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">Accepted files: PDF, JPG or PNG up to 5 MB each.</p>
+      </div>
+    </Card>
   )
 }

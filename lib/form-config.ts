@@ -48,12 +48,25 @@ export interface StepConfig {
   fields: FieldConfig[]
 }
 
+export interface DocumentConfig {
+  type: string
+  label: string
+  hint: string
+  required: boolean
+  enabled: boolean
+}
+
 export interface FormConfig {
   version: 1
   settings: { applications_open: boolean; opens_at: string | null; closes_at: string | null; closed_message: string }
   welcome: { title: string; intro: string }
   course_step: { title: string; intro: string }
   steps: StepConfig[]
+  /** Files applicants upload on the last step. None by default. */
+  documents_intro: string
+  documents: DocumentConfig[]
+  /** Optional declaration the applicant must accept before signing. Off by default. */
+  declaration: { enabled: boolean; text: string; accept_label: string }
 }
 
 export type Answers = Record<string, string | boolean | null>
@@ -193,11 +206,19 @@ export const DEFAULT_FORM_CONFIG: FormConfig = {
       ],
     },
   ],
+  documents_intro: 'Files should be PDF, JPG or PNG, and no larger than 5 MB each.',
+  documents: [],
+  declaration: {
+    enabled: false,
+    text: 'I declare that the information I have given in this application is true and complete. I understand that false information may lead to my application being declined.',
+    accept_label: 'I accept the declaration above',
+  },
 }
 
 // ── Normalisation ───────────────────────────────────────────────
 
 const CUSTOM_KEY = /^custom_[a-z0-9_]{1,40}$/
+const DOC_TYPE = /^[a-z0-9_]{2,40}$/
 
 function str(v: unknown, max: number, fallback = ''): string {
   return typeof v === 'string' ? v.slice(0, max) : fallback
@@ -278,6 +299,20 @@ export function normalizeConfig(input: unknown): FormConfig {
     }
   })
 
+  const docSeen = new Set<string>()
+  const documents: DocumentConfig[] = (Array.isArray(raw.documents) ? raw.documents : d.documents)
+    .filter((x: any) => x && typeof x === 'object' && typeof x.type === 'string' && DOC_TYPE.test(x.type))
+    .filter((x: any) => (docSeen.has(x.type) ? false : (docSeen.add(x.type), true)))
+    .slice(0, 10)
+    .map((x: any) => ({
+      type: x.type,
+      label: str(x.label, 200).trim() || x.type,
+      hint: str(x.hint, 500),
+      required: bool(x.required, false),
+      enabled: bool(x.enabled, true),
+    }))
+  const decl = raw.declaration ?? {}
+
   const s = raw.settings ?? {}
   const opens = isoOrNull(s.opens_at)
   const closes = isoOrNull(s.closes_at)
@@ -298,7 +333,31 @@ export function normalizeConfig(input: unknown): FormConfig {
       intro: str(raw.course_step?.intro, 1000, d.course_step.intro),
     },
     steps,
+    documents_intro: str(raw.documents_intro, 1000, d.documents_intro),
+    documents,
+    declaration: {
+      enabled: bool(decl.enabled, d.declaration.enabled),
+      text: str(decl.text, 5000).trim() || d.declaration.text,
+      accept_label: str(decl.accept_label, 300).trim() || d.declaration.accept_label,
+    },
   }
+}
+
+export interface UploadedDoc {
+  type: string
+  path: string
+  name: string
+  size: number
+}
+
+/** Required documents and the declaration (checked on the last step and on submit). */
+export function validateFinal(config: FormConfig, docs: { type: string }[], declarationAccepted: boolean | null): Errors {
+  const e: Errors = {}
+  for (const req of config.documents) {
+    if (req.enabled && req.required && !docs.some((d) => d.type === req.type)) e[`doc_${req.type}`] = `Please upload: ${req.label}`
+  }
+  if (config.declaration.enabled && declarationAccepted !== true) e.declaration = 'Please accept the declaration'
+  return e
 }
 
 export function applicationsOpen(config: FormConfig, now = new Date()) {

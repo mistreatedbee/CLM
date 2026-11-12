@@ -10,6 +10,7 @@ import type { ApplicationStatus } from '@/lib/clm-data'
 import { formatMoney, type PriceQuote } from '@/lib/courses'
 import { getPublishedForm } from '@/lib/form-config-server'
 import { fieldLabels } from '@/lib/form-config'
+import { DOCUMENTS_BUCKET } from '@/lib/documents-server'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -71,7 +72,15 @@ export default async function ApplicationDetailPage({
   if (!app) notFound()
 
   // Answers to questions added in Admin > Application form.
-  const labels = fieldLabels(await getPublishedForm())
+  const publishedForm = await getPublishedForm()
+  const labels = fieldLabels(publishedForm)
+  // Uploaded documents: short-lived private links (storage access is checked for admins).
+  const rawDocs = ((app as { documents?: { type: string; path: string; name: string }[] }).documents ?? [])
+  const documents = await Promise.all(rawDocs.map(async (d) => {
+    const { data } = await supabase.storage.from(DOCUMENTS_BUCKET).createSignedUrl(d.path, 600)
+    return { ...d, label: publishedForm.documents.find((x) => x.type === d.type)?.label ?? d.type.replace(/_/g, ' '), url: data?.signedUrl ?? null }
+  }))
+  const declarationAccepted = (app as { declaration_accepted?: boolean | null }).declaration_accepted
   const customAnswers = Object.entries(((app as { custom_answers?: Record<string, unknown> }).custom_answers ?? {}) as Record<string, unknown>)
     .filter(([, v]) => v !== null && v !== '' && v !== undefined)
 
@@ -147,6 +156,28 @@ export default async function ApplicationDetailPage({
                     value={typeof value === 'boolean' ? value : String(value)}
                   />
                 ))}
+              </Section>
+            )}
+
+            {(documents.length > 0 || declarationAccepted !== null && declarationAccepted !== undefined) && (
+              <Section title="Documents & declaration">
+                {documents.map((d) => (
+                  <div key={d.path} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/50 p-3">
+                    <div>
+                      <p className="text-sm font-semibold text-muted-foreground">{d.label}</p>
+                      <p className="text-base text-foreground">{d.name}</p>
+                    </div>
+                    {d.url ? (
+                      <a href={d.url} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold hover:border-primary hover:text-primary">
+                        View file
+                      </a>
+                    ) : <span className="text-sm text-destructive">File missing</span>}
+                  </div>
+                ))}
+                {documents.length > 0 && <p className="text-xs text-muted-foreground">Links are private and expire after 10 minutes.</p>}
+                {declarationAccepted !== null && declarationAccepted !== undefined && (
+                  <Field label="Declaration" value={declarationAccepted ? 'Accepted' : 'Not accepted'} />
+                )}
               </Section>
             )}
 

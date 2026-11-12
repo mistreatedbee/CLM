@@ -26,11 +26,15 @@ import {
   applicationsOpen,
   enabledSteps,
   isFieldVisible,
+  validateFinal,
   validateStep,
   type Answers,
   type Errors,
   type FormConfig,
+  type UploadedDoc,
 } from '@/lib/form-config'
+import { removeDocument, uploadDocument } from '@/app/actions/documents'
+import { DocumentsStep } from './documents-step'
 import { FieldRenderer } from './field-renderer'
 import { ReviewStep } from './review-step'
 import { CourseStep } from './course-step'
@@ -38,6 +42,8 @@ import type { PublicCourse } from '@/lib/courses'
 import type { SiteContent } from '@/lib/site-content'
 
 const DRAFT_KEY = 'clm-application-draft'
+const DOCS_KEY = 'clm-application-docs'
+const SESSION_KEY = 'clm-application-session'
 
 type Phase = 'welcome' | 'form' | 'submitted'
 type SaveState = 'idle' | 'saving' | 'saved'
@@ -66,8 +72,15 @@ export function ApplicationWizard({
 }) {
   const openCourses = courses.filter((c) => c.open_for_applications)
   const steps = useMemo(() => enabledSteps(config), [config])
-  const stepKeys = useMemo(() => ['course', ...steps.map((s) => s.key), 'review'], [steps])
-  const shortLabels = useMemo(() => ['Course', ...steps.map((s) => s.short), 'Review'], [steps])
+  const hasFinal = config.documents.some((d) => d.enabled) || config.declaration.enabled
+  const stepKeys = useMemo(
+    () => ['course', ...steps.map((s) => s.key), ...(hasFinal ? ['documents'] : []), 'review'],
+    [steps, hasFinal],
+  )
+  const shortLabels = useMemo(
+    () => ['Course', ...steps.map((s) => s.short), ...(hasFinal ? ['Documents'] : []), 'Review'],
+    [steps, hasFinal],
+  )
 
   const [phase, setPhase] = useState<Phase>('welcome')
   const [stepIndex, setStepIndex] = useState(0)
@@ -80,6 +93,11 @@ export function ApplicationWizard({
   const [copied, setCopied] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState('')
+  const [docs, setDocs] = useState<UploadedDoc[]>([])
+  const [declaration, setDeclaration] = useState<boolean | null>(null)
+  const [uploading, setUploading] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const topRef = useRef<HTMLDivElement>(null)
   const hydrated = useRef(false)
 
@@ -88,6 +106,11 @@ export function ApplicationWizard({
   useEffect(() => {
     if (preview) return
     try {
+      let sid = localStorage.getItem(SESSION_KEY)
+      if (!sid) { sid = crypto.randomUUID(); localStorage.setItem(SESSION_KEY, sid) }
+      setSessionId(sid)
+      const savedDocs = localStorage.getItem(DOCS_KEY)
+      if (savedDocs) setDocs(JSON.parse(savedDocs))
       const raw = localStorage.getItem(DRAFT_KEY)
       if (raw) {
         const parsed = JSON.parse(raw)
@@ -135,9 +158,47 @@ export function ApplicationWizard({
 
   const stepKey = stepKeys[stepIndex]
   const currentStep = steps.find((s) => s.key === stepKey)
-  const title = stepKey === 'course' ? config.course_step.title : stepKey === 'review' ? 'Review & Submit' : currentStep?.title ?? ''
+  const title = stepKey === 'course' ? config.course_step.title
+    : stepKey === 'review' ? 'Review & Submit'
+    : stepKey === 'documents' ? 'Documents'
+    : currentStep?.title ?? ''
+
+  const saveDocs = (next: UploadedDoc[]) => {
+    setDocs(next)
+    if (!preview) localStorage.setItem(DOCS_KEY, JSON.stringify(next))
+  }
+
+  const handleUpload = async (docType: string, file: File) => {
+    if (preview) { setUploadError('Uploads are switched off in preview.'); return }
+    setUploading(docType)
+    setUploadError(null)
+    const fd = new FormData()
+    fd.set('draftId', sessionId)
+    fd.set('docType', docType)
+    fd.set('file', file)
+    const res = await uploadDocument(fd)
+    if (!res.ok) setUploadError(res.error)
+    else {
+      const previous = docs.find((d) => d.type === docType)
+      if (previous) void removeDocument(sessionId, previous.path)
+      saveDocs([...docs.filter((d) => d.type !== docType), res.doc])
+      setErrors((e) => ({ ...e, [`doc_${docType}`]: undefined }))
+    }
+    setUploading(null)
+  }
+
+  const handleRemove = async (doc: UploadedDoc) => {
+    setUploadError(null)
+    const res = await removeDocument(sessionId, doc.path)
+    if (!res.ok) { setUploadError(res.error ?? 'Could not remove the file.'); return }
+    saveDocs(docs.filter((d) => d.path !== doc.path))
+  }
 
   const goNext = () => {
+    if (stepKey === 'documents') {
+      const errs = validateFinal(config, docs, declaration)
+      if (Object.keys(errs).length > 0) { setErrors(errs); scrollTop(); return }
+    }
     if (currentStep) {
       const errs = validateStep(currentStep, answers)
       if (Object.keys(errs).length > 0) {
@@ -166,6 +227,14 @@ export function ApplicationWizard({
   const startFresh = () => {
     setAnswers(DEFAULT_ANSWERS)
     setCourseId('')
+    setDocs([])
+    setDeclaration(null)
+    if (!preview) {
+      const sid = crypto.randomUUID()
+      localStorage.setItem(SESSION_KEY, sid)
+      localStorage.removeItem(DOCS_KEY)
+      setSessionId(sid)
+    }
     setDraftFound(false)
     if (!preview) localStorage.removeItem(DRAFT_KEY)
     setStepIndex(0)
@@ -176,7 +245,7 @@ export function ApplicationWizard({
     if (preview) { setSubmitError('This is a preview — submissions are disabled.'); return }
     setSubmitting(true)
     setSubmitError(null)
-    const result = await submitApplication({ courseId, answers })
+    const result = await submitApplication({ courseId, answers, draftId: sessionId, documents: docs, declarationAccepted: declaration })
     setSubmitting(false)
 
     if (!result.success) {
@@ -185,12 +254,15 @@ export function ApplicationWizard({
         setErrors(result.fieldErrors)
         const firstBad = steps.findIndex((s) => s.fields.some((f) => result.fieldErrors![f.key]))
         if (firstBad >= 0) { setStepIndex(firstBad + 1); scrollTop() }
+        else if (hasFinal) { setStepIndex(stepKeys.indexOf('documents')); scrollTop() }
       }
       return
     }
 
     setAppNumber(result.ref)
     localStorage.removeItem(DRAFT_KEY)
+    localStorage.removeItem(DOCS_KEY)
+    localStorage.removeItem(SESSION_KEY)
     setPhase('submitted')
     window.scrollTo({ top: 0 })
   }
@@ -277,8 +349,14 @@ export function ApplicationWizard({
             ))}
           </div>
         )}
+        {stepKey === 'documents' && (
+          <DocumentsStep config={config} docs={docs} uploading={uploading} uploadError={uploadError} errors={errors}
+            declaration={declaration} onDeclaration={(v) => { setDeclaration(v); setErrors((e) => ({ ...e, declaration: undefined })) }}
+            onUpload={handleUpload} onRemove={handleRemove} />
+        )}
         {stepKey === 'review' && (
-          <ReviewStep steps={steps} answers={answers} courseId={courseId} courses={openCourses} onEdit={editStep} />
+          <ReviewStep steps={steps} answers={answers} courseId={courseId} courses={openCourses} onEdit={editStep}
+            config={config} docs={docs} declaration={declaration} />
         )}
 
         {stepKey === 'review' && (
