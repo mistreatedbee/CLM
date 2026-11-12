@@ -9,7 +9,8 @@ import { extractFromNotes, formatDate } from '@/lib/clm-data'
 import type { ApplicationStatus } from '@/lib/clm-data'
 import { formatMoney, type PriceQuote } from '@/lib/courses'
 import { getPublishedForm } from '@/lib/form-config-server'
-import { fieldLabels } from '@/lib/form-config'
+import { CORE_FIELDS, fieldLabels, type Answers } from '@/lib/form-config'
+import { ApplicationEditor, type EditSection } from '@/components/admin/application-editor'
 import { DOCUMENTS_BUCKET } from '@/lib/documents-server'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -60,13 +61,21 @@ export default async function ApplicationDetailPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: app }, { data: notes }] = await Promise.all([
+  const [{ data: app }, { data: notes }, { data: edits }] = await Promise.all([
     supabase.from('clm_applications').select('*').eq('id', id).single(),
     supabase
       .from('application_notes')
       .select('*')
       .eq('application_id', id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('audit_logs')
+      .select('id, actor_name, metadata, created_at')
+      .eq('target_type', 'clm_applications')
+      .eq('target_id', id)
+      .eq('action', 'edited')
+      .order('created_at', { ascending: false })
+      .limit(50),
   ])
 
   if (!app) notFound()
@@ -81,6 +90,39 @@ export default async function ApplicationDetailPage({
     return { ...d, label: publishedForm.documents.find((x) => x.type === d.type)?.label ?? d.type.replace(/_/g, ' '), url: data?.signedUrl ?? null }
   }))
   const declarationAccepted = (app as { declaration_accepted?: boolean | null }).declaration_accepted
+  // Current answers for the editor, using the questions on the live form.
+  const row = app as unknown as Record<string, unknown>
+  const storedCustom = (row.custom_answers ?? {}) as Record<string, unknown>
+  const answerOf = (key: string) => (CORE_FIELDS[key] ? row[CORE_FIELDS[key].column] : storedCustom[key])
+  const editValues: Answers = {}
+  const editSections: EditSection[] = publishedForm.steps
+    .map((s) => ({
+      title: s.title,
+      fields: s.fields.filter((f) => {
+        const v = answerOf(f.key)
+        return f.enabled || (v !== null && v !== undefined && v !== '')
+      }),
+    }))
+    .filter((s) => s.fields.length > 0)
+  for (const s of editSections) for (const f of s.fields) {
+    const v = answerOf(f.key)
+    editValues[f.key] = typeof v === 'boolean' ? v : v === null || v === undefined ? '' : String(v)
+  }
+  const columnLabels: Record<string, string> = {}
+  for (const [key, def] of Object.entries(CORE_FIELDS)) columnLabels[def.column] = labels[key] ?? key
+  const editHistory = ((edits ?? []) as { id: string; actor_name: string | null; metadata: Record<string, { from: unknown; to: unknown }> | null; created_at: string }[])
+    .flatMap((e) => Object.entries(e.metadata ?? {}).flatMap(([col, change]) => {
+      if (col === 'custom_answers') {
+        const from = (change.from ?? {}) as Record<string, unknown>
+        const to = (change.to ?? {}) as Record<string, unknown>
+        return Object.keys({ ...from, ...to })
+          .filter((k) => JSON.stringify(from[k] ?? null) !== JSON.stringify(to[k] ?? null))
+          .map((k) => ({ key: `${e.id}-${k}`, who: e.actor_name, when: e.created_at, label: labels[k] ?? k, from: from[k], to: to[k] }))
+      }
+      return [{ key: `${e.id}-${col}`, who: e.actor_name, when: e.created_at, label: columnLabels[col] ?? col.replace(/_/g, ' '), from: change.from, to: change.to }]
+    }))
+  const show = (v: unknown) => (v === true ? 'Yes' : v === false ? 'No' : v === null || v === undefined || v === '' ? '(empty)' : String(v))
+
   const customAnswers = Object.entries(((app as { custom_answers?: Record<string, unknown> }).custom_answers ?? {}) as Record<string, unknown>)
     .filter(([, v]) => v !== null && v !== '' && v !== undefined)
 
@@ -133,6 +175,8 @@ export default async function ApplicationDetailPage({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Application details */}
         <div className="space-y-6 lg:col-span-2">
+          <ApplicationEditor applicationId={app.id} sections={editSections} values={editValues} />
+
           <Card className="space-y-8 p-6">
             <Section title="Course">
               <Field label="Applying for" value={app.course_name ?? 'Membership only (no course)'} />
@@ -245,6 +289,27 @@ export default async function ApplicationDetailPage({
               </div>
             </Section>
           </Card>
+
+          {editHistory.length > 0 && (
+            <Card className="p-6">
+              <h2 className="mb-4 border-b border-border pb-2 font-heading text-lg font-bold text-foreground">
+                Edit history
+              </h2>
+              <ol className="space-y-4">
+                {editHistory.map((h) => (
+                  <li key={h.key} className="text-base">
+                    <p className="font-semibold text-foreground">{h.label}</p>
+                    <p className="text-muted-foreground">
+                      <span className="line-through">{show(h.from)}</span> → <span className="text-foreground">{show(h.to)}</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {h.who ?? 'Admin'} · {new Date(h.when).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' })}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          )}
         </div>
 
         {/* Review panel */}
